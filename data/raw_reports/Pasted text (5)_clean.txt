@@ -1,0 +1,291 @@
+Note: The data cut-off for this product was 11:45 am ET on November 16. ISW will cover subsequent reports in the November 17 Russian Offensive Campaign Assessment.
+
+Ukrainian drone operations continue to play a critical role in constraining Russian mechanized maneuver and preventing Russian forces from fully exploiting Ukraine’s ongoing manpower constraints. Ukrainian President Volodymyr Zelensky stated during an interview with Ukrainian media published on November 16 that Russian forces are currently advancing along the frontline due in part to decreased Ukrainian morale exacerbated by delays in staffing and equipping new Ukrainian brigades and granting frontline Ukrainian defenders necessary rest and rotation. Zelensky stressed the importance of standing up new brigades to replace and reinforce Ukrainian forces currently serving on the frontline but noted that Russian forces also continue to take significant manpower losses in exchange for minimal gains. Zelensky estimated that Russian forces are currently losing between 1,500 and 2,000 troops per day in Ukraine and assessed that Russian forces cannot maintain their rate of advance while taking losses at this scale.
+
+Zelensky’s acknowledgement of morale issues and manpower constraints among frontline Ukrainian infantry suggests that Ukrainian drone operations are likely playing an outsized role in defending against and inflicting losses on advancing Russian forces. Zelensky noted during the interview that Russian advances have already slowed in some directions, and Ukrainian officials have previously observed that Ukrainian drone operations have played a role in slowing Russian advances to a foot pace. A Ukrainian drone operator stated in August 2024 that Russian forces were able to advance more successfully in the Pokrovsk direction by conducting ground attacks in groups of two to four soldiers under the cover of trees, making them harder for Ukrainian drone operators to detect. Subsequent Ukrainian reporting suggested that Russian forces began employing this tactic more widely throughout the Pokrovsk direction in September and October 2024. A Russian milblogger and former Storm-Z instructor noted on November 16 that these small, infantry-led assaults are not the most efficient tactic for expedient advances in the rural settlements and fields near Selydove, where Russian forces have very little coverage from Ukrainian drone operations. The milblogger suggested that Russian forces can currently only bring reinforcements and supplies forward when Ukrainian drone operators are engaged in another area of the frontline. The milblogger noted that unspecified “problems,” possibly referring to Ukrainian drone operations or the Russian military command’s insistence on conducting unnecessarily costly infantry assaults, continue to hinder Russian forces’ ability to advance more rapidly along the frontline and fully exploit Ukraine’s manpower constraints.
+
+Ukrainian drone operations have also been crucial in constraining Russian mechanized maneuver throughout the frontline, particularly during early Summer 2024 when Ukrainian forces were facing severe artillery shortages as a result of delays in Western security assistance. Successful Ukrainian drone strikes against Russian armored vehicles in the Pokrovsk direction in June 2024 may have played a role in the Russian military command’s decision to limit mechanized assaults in this direction. Ukrainian drone operations have also played an important role in repelling Russian mechanized assaults in Kursk and Donetsk oblasts and near Kupyansk. Russian forces have attempted to innovate and deploy more effective drone protection systems for armored vehicles and tanks in recent months, but even the most “successful” Russian mechanized assaults that have resulted in several kilometers of gains have generated significant armor losses due to Ukrainian drone strikes. Ukraine’s demonstrated ability to strike Russian mechanized columns effectively has prevented Russian forces from conducting mechanized breakthroughs and exploitations at scale. ISW has previously assessed that the Russian military command may not able to accept the current scale and rate of Russian vehicle losses in the coming months and years given the constraints on Russia’s defense industrial production, declining Soviet-era vehicle stockpiles, and the Russian military’s failure to achieve operationally significant territorial advances through mechanized maneuver. Further improvements to Ukraine’s drone capabilities and continually improving integration of Ukrainian drones with ground operations remain critical to Ukraine’s ability to defend against advancing Russian forces and liberate occupied territory in future counteroffensive operations.                 
+
+Zelensky emphasized that Ukraine must enter any future negotiations from a position of strength as Russian President Vladimir Putin is not interested in a negotiated settlement — no matter the negotiating platform or mediator — that results in anything less than Ukrainian capitulation. Zelensky stated that Ukraine must be “strengthened by some important elements” to negotiate with Putin, emphasizing that Ukraine cannot enter negotiations from a position of weakness. Zelensky stated that Putin does not want peace but would still be willing to come to the negotiating table in order to reduce Russia’s diplomatic isolation and to secure concessions and Ukraine’s capitulation. Zelensky stated that it is important that any negotiation platform and potential meditators remember that Russia violated Ukrainian territorial integrity and international law by invading Ukraine in 2014 and 2022 and remarked that his conversations with US President-elect Donald Trump demonstrate that Trump is “on the side of supporting Ukraine” and has listened to Ukraine’s position. Zelensky concluded that Ukraine must do everything to end the war by diplomatic means in 2025. ISW recently assessed that the Kremlin is trying to dictate the terms of any potential “peace” negotiations with Ukraine in advance of US President-elect Donald Trump’s inauguration. The Kremlin has consistently demonstrated that it is unwilling to compromise on the terms of any possible negotiations while strongly indicating that the Kremlin’s longstanding goal of complete Ukrainian capitulation remains unchanged. Any future negotiations, no matter the platform or mediator, will require Ukraine to enter talks from a position of strength that forces Putin to change his calculus, engage in good faith talks, and accept compromises.
+
+Russian forces are innovating their long-range strike packages to include decoy Shahed drones and Shahed drones with thermobaric warheads, likely to confuse and exhaust Ukrainian air defenses and increase the damages of long-range strikes. The Associated Press (AP) reported on November 16 that Russia’s Alabuga Special Economic Zone (SEZ), which assembles Iranian-provided Shahed drones, has been producing “hundreds” of decoy drones and recently began producing drones with thermobaric warheads. A Ukrainian military and electronics expert told the AP that more than half of the long-range strike drones that Russia has launched at Ukraine recently have been decoys. Acting Head of the Ukrainian Air Force Press Office Colonel Yuriy Ihnat told the AP that the decoy drones are indistinguishable from armed Shahed drones on Ukrainian radar systems, forcing Ukrainian forces to expend firepower and use electronic warfare (EW) mechanisms to down them. The AP noted that Russian forces attempt to take advantage of exhausted Ukrainian air defenses to get more powerful weapons, such as cruise and ballistic missiles, through Ukraine’s air defense umbrella. The AP also noted that the decoy drones also allow Russian forces to locate Ukrainian air defense locations before Ukrainian air defenses and EW down the decoys, but that Russia is using various electronic components, including Ukrainian SIM cards and Starlink systems, to make the drone variants more resistant to jamming. The Ukrainian Air Force has increasingly been reporting that Russian forces are launching strike drones of an unknown type — likely referring to the decoy drones — during regular overnight drone and missile strikes on Ukraine. The Ukrainian Air Forces has also been noting that increasing numbers of drones have become “lost” in Ukrainian airspace, likely due to Ukrainian EW countermeasures — suggesting that Ukrainian forces have been successful in adapting their EW to down the new Russian decoy drones. Decoy drones are cheap, however, and the longer they remain airborne in Ukrainian airspace, the more the decoys can distract Ukrainian air defenses and provide targeting for future Russian strikes. Ihnat reported that Russian forces did not use any decoy drones overnight on November 14-15 — the first instance in weeks.
+
+The Ukrainian military and electronics expert stated that the thermobaric drones, which Russian forces began fielding in Summer 2024, account for between three and five percent of the long-range strike drones Russia has been launching at Ukraine recently. Ukrainian military-focused sources recently reported that the thermobaric warheads on Shahed drones have 50 to 52 kilogram warheads and that Russian forces are equipping Shahed variants with ranges up to 140 kilometers longer with the warheads. A weapons expert told the AP that thermobaric drones are particularly effective against buildings and could cause significant damage to Ukraine’s power plants, which are particularly critical to maintaining Ukraine’s defense industrial base (DIB) and heating the country. The Kremlin will likely continue to innovate its long-range strike drones in an attempt to bypass Ukrainian air defenses and may increasingly use decoy drones and drones with larger or more dangerous payloads to increase the effectiveness of its long-range strikes against Ukraine ahead of and during the winter.
+
+North Korean dictator Kim Jong-un has ordered North Korean defense industrial enterprises to begin serial production of likely tactical strike drones – an example of how increasing Russian-North Korean military cooperation allows North Korea to learn from Russia’s war in Ukraine. North Korean state news outlet KCNA reported on November 15 that Kim oversaw a test of “various types” of North Korean-produced strike drones and ordered the North Korean defense industrial base (DIB) to begin mass production of these drones “as early as possible.” Kim emphasized that strike drones have had notable impacts in both “big and small” conflicts and stated that North Korea is focusing on combining unmanned systems with operational plans and principles of war in its military policy. A Russian milblogger commented on blurred images of the drones from North Korean media and suggested that the drones look like the Russian “Lancet” tactical strike drones. ISW cannot independently verify the extent to which the North Korean drones may be based on Russian Lancets. It is currently unclear if North Korea intends to export any of these new strike drones to Russia or other countries after beginning serial production. North Korea will likely continue to learn lessons from Russia’s war in Ukraine as it increases its military cooperation with Russia, thereby increasing its own military capabilities and the credibility of its threat to the Asia Pacific region.
+
+The Russian military command reportedly arrested and removed several commanders within the Russian 3rd Combined Arms Army [CAA] following inaccurate reports they made about alleged Russian advances near Bilohorivka and repeated outcries from the Russian milblogger community. A Russian milblogger claimed on November 16 that Russian authorities arrested the commander of the 3rd CAA (formerly 2nd Luhansk People’s Republic Army Corps [LNR AC]), the 3rd CAA’s chief of staff, and the commander of the 3rd CAA’s 7th Motorized Rifle Brigade following widespread Russian milblogger complaints about Russian officers submitting incorrect reports to their superiors and planning “incomprehensible” assaults near Bilohorivka (northeast of Siversk). The milblogger claimed that Russian authorities also removed the commanders of unspecified battalions and are inspecting the 6th and 123rd motorized rifle brigades (both of the 3rd CAA). Another Russian source additionally claimed that Russian authorities arrested the commander of the 123rd Motorized Rifle Brigade for concealing losses and the “real situation” in the Siversk direction from the Russian military command. A Kremlin-affiliated Russian milblogger claimed that “the system is inert” and that there was no reaction to Russian milbloggers’ initial complaints about false reports of Russian advances in the Siversk direction. The milblogger claimed that the Russian military command became aware of the problem when higher-ups wanted to visit Bilohorivka under the impression that Russian forces had seized the settlement and that the settlement was in the Russian near rear given the alleged Russian seizures of Serebryanka and Hryhorivka (both west of Bilohorivka). The milblogger claimed that frontline Russian commanders had previously tried to stage interviews with Russian war correspondents in order to corroborate the commanders’ false reports. ISW previously observed reports from July 2024 that Major General Alexei Kolesnikov is the commander of the 3rd CAA. Russian command failures and the pervasive Russian military culture of exaggerating battlefield successes near Bilohorivka has become a point of neuralgia for the Russian milblogger community recently, particularly as Russian forces have repeatedly wasted manpower and armored vehicles on unsuccessful attempts to take the settlement since at least May 2022. ISW also observed geolocated footage published on November 8 indicating that Ukrainian forces recently regained lost positions in northern Bilohorivka — further demonstrating the significance of frontline Russian commanders’ false reports to the Russian military command about Russian successes in the area. The Kremlin has previously demonstrated its sensitivity to the ultranationalist Russian milblogger community and responded to their criticisms, although it is unclear if the Russian military command arrested and removed the 3rd CAA commanders in response to the Russian milbloggers’ repeated outcries about issues near Bilohorivka.
+
+Key Takeaways:
+
+Ukrainian drone operations continue to play a critical role in constraining Russian mechanized maneuver and preventing Russian forces from fully exploiting Ukraine’s ongoing manpower constraints.
+Zelensky emphasized that Ukraine must enter any future negotiations from a position of strength as Russian President Vladimir Putin is not interested in a negotiated settlement – no matter the negotiating platform or mediator – that results in anything less than Ukrainian capitulation.
+Russian forces are innovating their long-range strike packages to include decoy Shahed drones and Shahed drones with thermobaric warheads, likely to confuse and exhaust Ukrainian air defenses and increase the damages of long-range strikes.
+North Korean dictator Kim Jong-un has ordered North Korean defense industrial enterprises to begin serial production of likely tactical strike drones – an example of how increasing Russian-North Korean military cooperation allows North Korea to learn from Russia’s war in Ukraine.
+The Russian military command reportedly arrested and removed several commanders within the Russian 3rd Combined Arms Army [CAA] following inaccurate reports they made about alleged Russian advances near Bilohorivka and repeated outcries from the Russian milblogger community.
+Russian forces recently advanced near Svatove, Kreminna, Chasiv Yar, Toretsk, Pokrovsk, and Kurakhove.
+Russian opposition outlet Mediazona reported that the Russian Central Bank has recently issued significantly more loan deferments (credit holidays) for Russian military personnel, indicating that Russian military recruitment rates may have increased.
+We do not report in detail on Russian war crimes because these activities are well-covered in Western media and do not directly affect the military operations we are assessing and forecasting. We will continue to evaluate and report on the effects of these criminal activities on the Ukrainian military and the Ukrainian population and specifically on combat in Ukrainian urban areas. We utterly condemn Russian violations of the laws of armed conflict and the Geneva Conventions and crimes against humanity even though we do not describe them in these reports. 
+
+Ukrainian Operations in the Russian Federation
+Russian Main Effort – Eastern Ukraine (comprised of three subordinate main efforts)
+Russian Subordinate Main Effort #1 – Push Ukrainian forces back from the international border with Belgorod Oblast and approach to within tube artillery range of Kharkiv City
+Russian Subordinate Main Effort #2 – Capture the remainder of Luhansk Oblast and push westward into eastern Kharkiv Oblast and encircle northern Donetsk Oblast
+Russian Subordinate Main Effort #3 – Capture the entirety of Donetsk Oblast
+Russian Supporting Effort – Southern Axis
+Russian Air, Missile, and Drone Campaign
+Russian Mobilization and Force Generation Efforts
+Russian Technological Adaptations
+Activities in Russian-occupied areas
+Significant Activity in Belarus
+Ukrainian Operations in the Russian Federation
+
+Russian forces continued assaults in the main Ukrainian salient in Kursk Oblast on November 15 and 16 but did not make confirmed advances. Russian milbloggers claimed that Russian forces are pushing Ukrainian forces from positions near Malaya Loknya (north of Sudzha) and Martynovka (northeast of Sudzha). Russian milbloggers claimed that Ukrainian forces unsuccessfully counterattacked southeast of Korenevo near Darino and Novoivanovka and east of Korenevo near Olgovka. Ukrainian Ground Forces Commander Lieutenant General Oleksandr Pavlyuk stated that Ukrainian forces damaged and destroyed 17 Russian armored vehicles and tanks during a recent Russian mechanized assault in an unspecified area of Kursk Oblast, possibly referring to the November 12 multi-wave battalion-sized mechanized assault near Novoivanovka. Elements of the Russian 137th Airborne (VDV) Regiment (106th VDV Division) are reportedly operating southeast of Korenevo, and elements of the Chechen “Zapad-Akhmat” Battalion are reportedly operating in the Kursk direction.
+
+Russian Main Effort – Eastern Ukraine
+
+Russian Subordinate Main Effort #1 – Kharkiv Oblast (Russian objective: Push Ukrainian forces back from the international border with Belgorod Oblast and approach to within tube artillery range of Kharkiv City)
+
+Geolocated footage published on November 16 shows Ukrainian drone operators destroying the flags that Russian forces placed on a bridge across the Sudost River connecting Hremyach and Kolos (both about 1.5 kilometers south of the international border) in northern Chernihiv Oblast on November 15, indicating that Russian forces likely do not have enduring positions near the bridge. A likely Russian sabotage and reconnaissance group conducted a limited incursion across the international border into Chernihiv Oblast on November 15, but there are currently no indications that Russian forces have established an enduring presence in the area.
+
+Russian forces continued offensive operations in northern Kharkiv Oblast on November 15 and 16 but did not make any confirmed advances. A Russian milblogger claimed that Russian forces seized the entirety of Sotnytskyi Kozachok (northwest of Kharkiv City) on November 16 after Russian sabotage and reconnaissance groups temporarily advanced into the settlement in July 2024. ISW has not observed visual confirmation that Russian forces have seized Sotnytskyi Kozachok, however. Russian forces conducted offensive operations northeast of Kharkiv City near Vovchansk and north of Kharkiv City near Vysoka Yaruha and Strilecha. A Russian milblogger claimed that Russian forces are conducting preparatory artillery strikes against Ukrainian positions west of Strilecha before intensifying assaults in the area.
+
+Russian Subordinate Main Effort #2 – Luhansk Oblast (Russian objective: Capture the remainder of Luhansk Oblast and push westward into eastern Kharkiv Oblast and northern Donetsk Oblast)
+
+Russian forces recently marginally advanced west of Svatove and Kreminna amid continued offensive operations along the Kupyansk-Svatove-Kreminna line on November 16. Geolocated footage published on November 15 and 16 indicates that Russian forces recently marginally advanced in southern Vyshneve (west of Svatove) and central Terny (west of Kreminna). A Ukrainian military unit fighting in the Kupyansk direction stated that Ukrainian forces captured several Russian service members operating in Kupyansk, and a Ukrainian outlet reported that Ukrainian forces pushed Russian forces from positions in the city. Russian milbloggers claimed that Russian forces continued to advance near Kupyansk, however, including near the sugar factory in eastern Kupyansk, north of Kupyansk towards Holubivka, and south of Kupyansk towards Kupyansk-Vuzlovyi. One Russian milblogger claimed that Russian forces advanced into the industrial center of Kupyansk and that fighting is ongoing in the center of the settlement, but ISW has not observed confirmation of these more maximalist claims. Russian forces continued assaults east of Kupyansk near Pishchane; southeast of Kupyansk near Kolisnykivka, Kruhlyakivka, Zahryzove, and Berestove; west of Svatove near Kopanky and Nadiya; southwest of Svatove near Tverdokhlibove, Novoyehorivka, Hrekivka, Cherneshchyna, and Makiivka; and west of Kreminna near Terny and Torske on November 15 and 16. Elements of the Russian 144th Motorized Rifle Division (20th Combined Arms Army [CAA], Moscow Military District [MMD]) are reportedly operating near Nevske.
+
+Russian Subordinate Main Effort #3 – Donetsk Oblast (Russian objective: Capture the entirety of Donetsk Oblast, the claimed territory of Russia’s proxies in Donbas)
+
+Russian forces conducted offensive operations near Verkhnokamyanske (east of Siversk) and Vyimka (southeast of Siversk) on November 15 and 16 but did not advance. Elements of the Russian 39th Radiation, Chemical, and Biological Protection Regiment (3rd Combined Arms Army [CAA], formerly the 2nd Luhansk People’s Republic Army Corps [LNR AC]) are reportedly conducting TOS-1A thermobaric artillery strikes near Bilohorivka (northeast of Siversk).
+
+Russian forces recently advanced in the Chasiv Yar direction amid continued offensive operations in the area on November 16. Geolocated footage published on November 15 indicates that Russian forces recently advanced up to Dubrovskyi Street along a narrow salient in central Chasiv Yar. Russian forces conducted offensive operations south of Chasiv Yar near Bila Hora on November 16. Elements of the Russian 98th Airborne (VDV) Division and “Sever-V” Brigade and drone operators of the “Okhotnik” (Hunter) Spetsnaz Detachment (51st CAA, formerly 1st Donetsk People’s Republic [DNR] AC) are reportedly operating near Chasiv Yar.
+
+Russian forces recently advanced in the Toretsk direction amid continued offensive operations in the area on November 16. Geolocated footage published on November 15 and 16 indicates that Russian forces recently advanced along Naberezhna Street and up to Promeneva Street in southern Toretsk. A Russian milblogger claimed that Russian forces also advanced up to Havrilova Street in northeastern Toretsk and seized Krymske (northeast of Toretsk), but ISW has not observed confirmation of these claims. Russian forces conducted offensive operations near Toretsk, north of Toretsk near Dyliivka, and west of Toretsk near Shcherbynivka on November 15 and 16.
+
+Russian forces recently advanced in the Pokrovsk direction amid continued offensive operations in the area on November 16. Geolocated footage published on November 16 shows a Russian flag flying in western Hryhorivka (southeast of Pokrovsk and west of Selydove), indicating that Russian forces recently seized the settlement. The Russian Ministry of Defense (MoD) claimed that Russian forces seized Hryhorivka, and Russian sources claimed that elements of the “Black Hussars” detachment of the Russian 15th Motorized Rifle Brigade (2nd CAA, Central Military District [CMD]) seized the settlement. Russian milbloggers claimed that Russian forces also advanced near Novooleksiivka, Pustynka, and Yurivka (all west of Selydove), but ISW has not observed confirmation of these claims.  Russian forces conducted offensive operations east of Pokrovsk near Promin, Myrolyubivka, and Krutyi Yar and southeast of Pokrovsk near Lysivka, Petrivka, Novooleksiivka, and Pustynka on November 15 and 16. Elements of the Russian 11th Air Force and Air Defense Army (Russian Aerospace Forces [VKS] and Eastern Military District [EMD]) are reportedly operating near Sukhyi Yar (southeast of Pokrovsk).
+
+Russian forces recently advanced in the Kurakhove direction amid continued offensive operations in the area on November 16. Geolocated footage published on November 16 indicates that Russian forces recently seized Voznesenka (north of Kurakhove) and the fields northeast of the settlement. Russian sources claimed that Russian forces also advanced south of Novoselydivka (north of Kurakhove), towards Berestky (just north of Kurakhove across the Kurakhivske Reservoir), and into central Kurakhove. ISW has not observed confirmation of these claims, however. A Kremlin-affiliated milblogger claimed on November 15 that information that Russian forces had seized Novoselydivka is unconfirmed. A Russian milblogger claimed that Russian forces are accumulating personnel to storm Berestky. Russian forces conducted offensive operations northwest of Kurakhove near Sontsivka, Novodmytrivka, and Zorya; north of Kurakhove near Illinka, Berestky, Novoselydivka, and Voznesenka; near Kurakhove itself; southeast of Kurakhove near Maskymilyanivka; and south of Kurakhove near Dalne on November 15 and 16. Drone operators of the “Kaira” Detachment (39th Motorized Rifle Brigade, 68th AC, EMD) are reportedly operating in the Kurakhove direction.
+
+Russian forces are reportedly deploying equipment from rear areas in the Zaporizhia direction to the Kurakhove direction. Ukrainian Mariupol Mayoral Advisor Petro Andryushchenko stated on November 16 that Russian forces are increasingly transporting equipment, including tanks, infantry fighting vehicles, armored personnel carriers, and trucks carrying ammunition, from the Berdyansk or Polohy directions through occupied Mariupol towards Volnovakha (roughly 22 kilometers southeast of Vuhledar) for offensive operations in the Kurakhove direction. Andryushchenko noted that Russian forces have not undertaken this level of transport activity in Mariupol for at least a year and half (since about Spring 2023) and that most of the Russian equipment moving to Mariupol or Hranitne (just north of Mariupol) came from Russia, not from occupied Zaporizhia Oblast. Russian and Ukrainian sources have recently reported on a possible increase in Russian offensive operations in the Zaporizhia direction, but ISW has not observed confirmation that Russian forces had redeployed forces to the Zaporizhia direction from other sectors of the frontline nor other indications suggesting an imminent Russian offensive operation in Zaporizhia Oblast. Reported large-scale Russian equipment deployments from the Zaporizhia direction could be a counterindicator of a reported possible intensification in Russian activity in the Zaporizhia direction.
+
+Russian forces reportedly advanced in the Vuhledar direction on November 16, but there were no confirmed changes to the frontline. A Russian milblogger claimed that Russian forces advanced north of Antonivka (northeast of Vuhledar), but ISW has not observed confirmation of this claim. A Russian source claimed that Russian positions along the O0510 (Shakhtarske-Kurahove) highway are less than one kilometer from the C051104 (Kostantynivka-Zelenivka) highway west of Uspenivka (north of Vuhledar), but ISW currently assesses that Russian forces near the O0510 highway are operating roughly 7.5 kilometers away from the C051104 highway. Russian forces conducted offensive operations northeast of Vuhledar near Katerynivka, Antonivka, Illinka, and Romanivka and northwest of Vuhledar near Sukhi Yaly and Trudove on November 15 and 16. A Russian milblogger claimed that Ukrainian forces are counterattacking near Trudove. Elements of the Russian 14th Spetsnaz Brigade (Russian General Staff’s Main Military Intelligence Directorate [GRU]) and the 69th Covering Brigade (35th CAA, EMD) are reportedly operating in the south Donetsk (Kurakhove-Vuhledar) direction; elements of the 39th Motorized Rifle Brigade (68th AC, EMD) are reportedly operating near Yelizavetivka (northeast of Vuhledar) and Trudove; elements of the 33rd Motorized Rifle Regiment (20th Motorized Rifle Division, 8th CAA, Southern Military District [SMD]) are reportedly operating near Illinka; and elements of the 40th Naval Infantry Brigade (Pacific Fleet, EMD) are reportedly operating in the Shakhtarske direction (northwest of Vuhledar).
+
+Russian forces continued offensive operations in the Donetsk-Zaporizhia Oblast border area on November 16, but there were no confirmed changes to the frontline. The Russian MoD claimed that Russian forces seized Makarivka (south of Velyka Novosilka), and a Russian milblogger claimed that Russian forces advanced towards Novodarivka (southwest of Velyka Novosilka), but ISW has not observed confirmation of these claims. A Russian source claimed that elements of the Russian 60th Motorized Rifle Brigade (5th CAA, EMD) maintain positions in most of Makarivka but that Russian forces still need to clear the northern part of the settlement. Russian forces conducted offensive operations southwest of Velyka Novosilka near Novodarivka and Rivnopil on November 15 and 16. Russian sources claimed that Ukrainian forces unsuccessfully counterattacked in unspecified areas in the Vremikva direction. The spokesperson of a Ukrainian brigade operating in the Vremivka direction reported on November 15 that Russian forces are trying to seize the entirety of southern Donetsk Oblast and advance northward.
+
+Russian Supporting Effort – Southern Axis (Russian objective: Maintain frontline positions and secure rear areas against Ukrainian strikes)
+
+Russian forces continued assaults in western Zaporizhia Oblast near Novoandriivka (northwest of Robotyne) on November 15 and 16, but there were no confirmed changes to the frontline. Russian sources claimed on November 15 and 16 that Russian forces advanced roughly half a kilometer from Robotyne towards Novodanylivka (north of Robotyne), but ISW has not observed visual confirmation of these claims. Drone operators of the Russian BARS-3 “Rodina” Battalion (Russian Combat Army Reserve) reportedly continue to operate in the Zaporizhia direction.
+
+Positional fighting continued in the Dnipro direction in east (left) bank Kherson Oblast on November 16, but there were no changes to the frontline. Elements of the Russian 1445th Motorized Rifle Regiment (reportedly a mobilized unit) and 45th Spetsnaz Brigade (Russian General Staff’s Main Directorate [GRU]) are reportedly operating in the Kherson direction. Ukraine’s Southern Operational Command published geolocated footage on November 16 showing a Ukrainian strike on a Russian command post in occupied Chelburda (north of Radensk and east of Kherson City).
+
+Russian Air, Missile, and Drone Campaign (Russian Objective: Target Ukrainian military and civilian infrastructure in the rear and on the frontline)
+
+Russian forces conducted a series of drone and missile strikes against Ukraine overnight on November 15-16. The Ukrainian Air Force reported that Russian forces struck Kharkiv Oblast with an S-300 air defense missile and launched 83 Shahed drones and “unspecified” strike drones (possibly referring to decoy drones) from Primorsko-Akhtarsk, Krasnodar Krai and Kursk and Oryol oblasts. The Ukrainian Air Force reported that Ukrainian forces downed 53 Russian drones over Cherkasy, Odesa, Kyiv, Zhytomyr, Sumy, Mykolaiv, Kirovohrad, Dnipropetrovsk, Poltava, Zaporizhia, Kharkiv and Khmelnytskyi oblasts and that unspecified Ukrainian countermeasures caused 30 Russian drones to become “lost.” Kyiv City Administration Head Serhiy Popko stated that falling drone debris damaged a residential building in Kyiv City, and Zaporizhia Oblast Head Ivan Fedorov stated that Shahed strikes damaged critical infrastructure in Zaporizhzhia City.
+
+Russian Mobilization and Force Generation Efforts (Russian objective: Expand combat power without conducting general mobilization)
+
+Russian opposition outlet Mediazona reported that the Russian Central Bank has recently issued significantly more loan deferments (credit holidays) for Russian military personnel, indicating that Russian military recruitment rates may have increased. Mediazona reported, citing Central Bank data, that the bank issued nearly 54,200 new credit holidays for Russian contract and mobilized personnel in July-September 2024 after having issued fewer than 30,000 credit holidays to military personnel in July-September 2023. Russian authorities passed a law in early 2023 allowing banks to offer deferments on loan payments to Russian military personnel fighting in Ukraine, likely as a financial incentive to encourage military service. The significant increase in credit holidays issued to Russian military personnel comes amid indications that the Kremlin is concerned about Russia’s long-term economic stability and efforts to cut the short- and long-term costs of the war by reducing certain benefits to Russian soldiers who fought in Ukraine.
+
+The Russian milblogger Telegram channel Thirteenth, which has been heavily critical of the Russian MoD’s and Kremlin’s conduct of the war in Ukraine, claimed on November 15 that a Russian court approved its main administrator Yegor Guzenko to fight in Ukraine in lieu of jail time. Russian authorities reportedly arrested Guzenko on October 5 in Stavropol Krai either for violating a prior house arrest or due to an altercation with Russian police, and the charges against Guzenko remain unclear. Russian outlet Baza reported on October 10, citing its own sources, that Guzenko refused to sign a military service contract when authorities detained him because he “was more needed on the information front” but that Guzenko may change his mind. The Thirteenth Telegram channel has continued to heavily criticize Russian authorities since Guzenko’s arrest, particularly Stavropol Krai authorities, and stated on November 15 that the channel will publish a series of interviews with Guzenko to “smash those dogs who lied and slandered” Guzenko while Guzenko was in prison.
+
+A Russian insider source claimed on November 15 that Russian Defense Minister Andrei Belousov approved a training course on “Geostrategy of Modern Society” for senior Russian military officers under the guidance of Russian state television host and propagandist Vladimir Solovyov. ISW is unable to confirm this claim.
+
+Russian Technological Adaptations (Russian objective: Introduce technological innovations to optimize systems for use in Ukraine)
+
+Nothing significant to report.
+
+Activities in Russian-occupied areas (Russian objective: Consolidate administrative control of annexed areas; forcibly integrate Ukrainian citizens into Russian sociocultural, economic, military, and governance systems)
+
+ISW is not publishing coverage of activities in Russian-occupied areas today.
+
+Significant activity in Belarus (Russian efforts to increase its military presence in Belarus and further integrate Belarus into Russian-favorable frameworks and Wagner Group activity in Belarus)
+
+Nothing significant to report.
+
+Note: ISW does not receive any classified material from any source, uses only publicly available information, and draws extensively on Russian, Ukrainian, and Western reporting and social media as well as commercially available satellite imagery and other geospatial data as the basis for these reports. References to all sources used are provided in the endnotes of each update.
+
+ https://suspilne dot media/881199-mi-povinni-zrobiti-vse-sob-nastupnogo-roku-vijna-zakincilas-ekskluzivne-intervu-prezidenta-zelenskogo/ ; https://suspilne dot media/881325-zelenskij-pro-prosuvanna-rosian-na-fronti/ ; https://suspilne dot media/881327-zelenskij-putin-ne-hoce-miru-ale-peregovori-jomu-mozut-buti-vigidni/
+
+ https://suspilne dot media/881199-mi-povinni-zrobiti-vse-sob-nastupnogo-roku-vijna-zakincilas-ekskluzivne-intervu-prezidenta-zelenskogo/ ; https://suspilne dot media/881325-zelenskij-pro-prosuvanna-rosian-na-fronti/ ; https://suspilne dot media/881327-zelenskij-putin-ne-hoce-miru-ale-peregovori-jomu-mozut-buti-vigidni/
+
+ https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-august-22-2024  
+
+ https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-september-16-2024 ; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-october-9-2024  
+
+ https://t.me/philologist_zov/1722
+
+ https://isw.pub/UkrWar031324 ; https://isw.pub/UkrWar041524 ; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-april-6-2024 ; https://isw.pub/UkrWar041024  
+
+ https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-june-4-2024  
+
+ https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-october-9-2024  ; https://isw.pub/UkrWar091324 ; https://isw.pub/UkrWar092724 ; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-12-2024 ; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-3-2024 ; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-october-11-2024
+
+ https://isw.pub/UkrWar091324 ; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-11-2024 ; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-12-2024
+
+ https://isw.pub/UkrWar100624
+
+ https://suspilne dot media/881199-mi-povinni-zrobiti-vse-sob-nastupnogo-roku-vijna-zakincilas-ekskluzivne-intervu-prezidenta-zelenskogo/
+
+ https://isw.pub/UkrWar111324
+
+ https://isw.pub/UkrWar111524
+
+ https://apnews.com/article/russia-ukraine-war-drones-thermobaric-bombs-decoy-2f904b04fcc5de17549415a974f5a92b
+
+ https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-12-2024; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-13-2024; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-14-2024; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-9-2024; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-6-2024; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-8-2024; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-october-17-2024
+
+ https://armyinform dot com.ua/2024/11/15/vnochi-rf-atakuvala-odesu-same-udarnymy-dronamy-a-ne-imitaczijnymy-bpla-yurij-ignat/
+
+ https://apnews.com/article/russia-ukraine-war-drones-thermobaric-bombs-decoy-2f904b04fcc5de17549415a974f5a92b
+
+ https://mil.in dot ua/uk/news/u-shahed-vyyavyly-novu-termobarychnu-bojovu-chastynu/; https://t.me/operativnoZSU/162647; https://defence-ua dot com/weapon_and_tech/termobarichna_bojova_chastina_shahediv_scho_tse_i_chomu_do_pravila_dvoh_stin_neobhidno_dodati_sche_odne-17119.html
+
+ https://apnews.com/article/russia-ukraine-war-drones-thermobaric-bombs-decoy-2f904b04fcc5de17549415a974f5a92b
+
+ http://www.pyongyangtimes dot com.kp/blog?page=revolutionary&blogid=6736d97a66968905a755d005; https://kcnawatch dot org/newstream/1731669020-884242398/respected-comrade-kim-jong-un-guides-performance-test-of-suicide-attack-drones-of-various-types/; http://kcna dot kp/kp/article/q/d3dab771a838053e59591fb203471d5a.kcmsf
+
+ https://t.me/wargonzo/23184; https://www.cnn.com/2024/11/15/asia/north-korea-self-detonating-drones-intl-hnk/index.html
+
+ https://understandingwar.org/backgrounder/north-korea-joins-russias-war-against-ukraine-operational-and-strategic-implications; https://isw.pub/UkrWar111424
+
+ https://t.me/osetin20/9600
+
+ https://t.me/soldat_prav/8283; https://t.me/milinfolive/135167
+
+ https://t.me/rybar/65433
+
+ https://isw.pub/UkrWar083124
+
+ https://isw.pub/UkrWar110724
+
+ https://isw.pub/UkrWar092724; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-september-21-2024 ; https://isw.pub/UkrWar100524; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-9-2024
+
+ https://www.facebook.com/GeneralStaff.ua/posts/pfbid0g3iRAPCsS5p13YfjYLK5H6V8RU3HoBcvvC57ker2EUpniPpoQxrHNx2kLCD3Zegcl
+
+ ; https://www.facebook.com/GeneralStaff.ua/posts/pfbid02fmLCqXTQubdoF4To49Ki2LmC1zKJhbMZsU5z6iSZkgAcXcdyejjXq2cqsGFMSVaTl ; https://www.facebook.com/GeneralStaff.ua/posts/pfbid0324wjctmDX2TEQfWTi7jRkzhWpR6ybXCERbmRv3z3dFhchdBwdBaXP5wisimh1Fpsl ; https://t.me/wargonzo/23180
+
+ https://t.me/DnevnikDesantnika/19278 ; https://t.me/dva_majors/57857; https://t.me/rybar/65420
+
+ https://t.me/DnevnikDesantnika/19278 ; https://t.me/dva_majors/57857; https://t.me/rybar/65420
+
+ https://t.me/Pavliuk_KSV/5656 ; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-12-2024
+
+ https://t.me/RKadyrov_95/5232 (Kursk direction); https://t.me/RVvoenkor/80726 (southeast of Korenevo)
+
+ https://armyinform.com dot ua/2024/11/16/na-chernigivshhyni-znyshhyly-rosijskyj-trykolor-vstanovlenyj-vorozhoyu-drg/ ; https://t.me/WarArchive_ua/22323; https://t.me/DPSUkr/22965
+
+ https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-15-2024
+
+ https://t.me/RVvoenkor/80743 ; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-july-25-2024 ; https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-july-17-2024
+
+ https://t.me/otukharkiv/2626; https://www.facebook.com/GeneralStaff.ua/posts/pfbid0g3iRAPCsS5p13YfjYLK5H6V8RU3HoBcvvC57ker2EUpniPpoQxrHNx2kLCD3Zegcl; https://www.facebook.com/GeneralStaff.ua/posts/pfbid02fmLCqXTQubdoF4To49Ki2LmC1zKJhbMZsU5z6iSZkgAcXcdyejjXq2cqsGFMSVaTl; https://www.facebook.com/GeneralStaff.ua/posts/pfbid0324wjctmDX2TEQfWTi7jRkzhWpR6ybXCERbmRv3z3dFhchdBwdBaXP5wisimh1Fpsl 
+
+ https://t.me/DnevnikDesantnika/19286
+
+ https://t.me/bbc44ombr/56; https://t.me/creamy_caprice/7520 ; https://x.com/franfran2424/status/1857778517682889126; https://t.me/OMIBr_60/616 ; https://t.me/creamy_caprice/7532
+
+ https://t.me/khornegroup/2919 ; https://mil.in dot ua/uk/news/proryv-okupantiv-u-kup-yansk-zavershyvsya-yihnoyu-likvidatsiyeyu-abo-polonom/
+
+ https://t.me/NgP_raZVedka/19483 ; https://t.me/DnevnikDesantnika/19280 ; https://t.me/dva_majors/57857; https://t.me/rybar/65420
+
+ https://t.me/Sladkov_plus/11815
+
+ https://www.facebook.com/GeneralStaff.ua/posts/pfbid0324wjctmDX2TEQfWTi7jRkzhWpR6ybXCERbmRv3z3dFhchdBwdBaXP5wisimh1Fpsl ; https://www.facebook.com/GeneralStaff.ua/posts/pfbid02fmLCqXTQubdoF4To49Ki2LmC1zKJhbMZsU5z6iSZkgAcXcdyejjXq2cqsGFMSVaTl ; https://www.facebook.com/GeneralStaff.ua/posts/pfbid0g3iRAPCsS5p13YfjYLK5H6V8RU3HoBcvvC57ker2EUpniPpoQxrHNx2kLCD3Zegcl ; https://t.me/DnevnikDesantnika/19280
+
+ https://t.me/vysokygovorit/18003
+
+ https://www.facebook.com/GeneralStaff.ua/posts/pfbid0g3iRAPCsS5p13YfjYLK5H6V8RU3HoBcvvC57ker2EUpniPpoQxrHNx2kLCD3Zegcl; https://www.facebook.com/GeneralStaff.ua/posts/pfbid02fmLCqXTQubdoF4To49Ki2LmC1zKJhbMZsU5z6iSZkgAcXcdyejjXq2cqsGFMSVaTl
+
+ https://t.me/boris_rozhin/144539
+
+ https://t.me/creamy_caprice/7518?single; https://t.me/bakhmutskyy/3638
+
+ https://www.facebook.com/GeneralStaff.ua/posts/pfbid02fmLCqXTQubdoF4To49Ki2LmC1zKJhbMZsU5z6iSZkgAcXcdyejjXq2cqsGFMSVaTl
+
+ https://t.me/DnevnikDesantnika/19268; https://t.me/nm_dnr/12986; https://t.me/basurin_e/15532
+
+ https://x.com/AudaxonX/status/1857749364996739187; https://x.com/AudaxonX/status/1857749732661067880; https://x.com/franfran2424/status/1857776729189744860; https://t.me/voron1OO/92; https://t.me/creamy_caprice/7533; https://t.me/Khyzhak_brigade/81
+
+ https://t.me/z_arhiv/29527
+
+ https://www.facebook.com/GeneralStaff.ua/posts/pfbid0324wjctmDX2TEQfWTi7jRkzhWpR6ybXCERbmRv3z3dFhchdBwdBaXP5wisimh1Fpsl; https://www.facebook.com/GeneralStaff.ua/posts/pfbid02fmLCqXTQubdoF4To49Ki2LmC1zKJhbMZsU5z6iSZkgAcXcdyejjXq2cqsGFMSVaTl ; https://www.facebook.com/GeneralStaff.ua/posts/pfbid0g3iRAPCsS5p13YfjYLK5H6V8RU3HoBcvvC57ker2EUpniPpoQxrHNx2kLCD3Zegcl
+
+ https://t.me/creamy_caprice/7530; https://t.me/blackhussars/3105
+
+ https://t.me/mod_russia/45772; https://t.me/blackhussars/3105 ; https://t.me/RVvoenkor/80752 ; https://t.me/boris_rozhin/144548 ; https://t.me/z_arhiv/29565; https://t.me/blackhussars/3105
+
+ https://t.me/z_arhiv/29565; https://t.me/NgP_raZVedka/19487 ; https://t.me/wargonzo/23180; https://t.me/dva_majors/57857; https://t.me/rybar/65420; https://t.me/voenkorKotenok/60159
+
+ https://www.facebook.com/GeneralStaff.ua/posts/pfbid0324wjctmDX2TEQfWTi7jRkzhWpR6ybXCERbmRv3z3dFhchdBwdBaXP5wisimh1Fpsl; https://www.facebook.com/GeneralStaff.ua/posts/pfbid02fmLCqXTQubdoF4To49Ki2LmC1zKJhbMZsU5z6iSZkgAcXcdyejjXq2cqsGFMSVaTl; https://www.facebook.com/GeneralStaff.ua/posts/pfbid0g3iRAPCsS5p13YfjYLK5H6V8RU3HoBcvvC57ker2EUpniPpoQxrHNx2kLCD3Zegcl
+
+ https://t.me/voin_dv/11854
+
+ https://t.me/creamy_caprice/7529; https://www.facebook.com/watch/?v=560242026747693
+
+ https://t.me/NgP_raZVedka/19490; https://t.me/z_arhiv/29561; https://t.me/DnevnikDesantnika/19265; https://t.me/DnevnikDesantnika/19284; https://t.me/wargonzo/23180; https://t.me/rybar/65417
+
+  https://t.me/rybar/65417
+
+ https://t.me/NgP_raZVedka/19482
+
+ https://www.facebook.com/GeneralStaff.ua/posts/pfbid0324wjctmDX2TEQfWTi7jRkzhWpR6ybXCERbmRv3z3dFhchdBwdBaXP5wisimh1Fpsl; https://www.facebook.com/GeneralStaff.ua/posts/pfbid02fmLCqXTQubdoF4To49Ki2LmC1zKJhbMZsU5z6iSZkgAcXcdyejjXq2cqsGFMSVaTl ; https://www.facebook.com/GeneralStaff.ua/posts/pfbid0g3iRAPCsS5p13YfjYLK5H6V8RU3HoBcvvC57ker2EUpniPpoQxrHNx2kLCD3Zegcl
+
+https://t.me/voin_dv/11856
+
+ https://armyinform dot com.ua/2024/11/16/okupanty-pochaly-zavozyty-vijskovu-tehniku-na-kurahivskyj-napryamok-nezvychnym-marshrutom/; https://www.youtube.com/watch?v=aDXWlQ2K0dM
+
+ https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-november-15-2024
+
+ https://t.me/rybar/65417
+
+ https://t.me/RVvoenkor/80737
+
+ https://www.facebook.com/GeneralStaff.ua/posts/pfbid0324wjctmDX2TEQfWTi7jRkzhWpR6ybXCERbmRv3z3dFhchdBwdBaXP5wisimh1Fpsl ; https://www.facebook.com/GeneralStaff.ua/posts/pfbid02fmLCqXTQubdoF4To49Ki2LmC1zKJhbMZsU5z6iSZkgAcXcdyejjXq2cqsGFMSVaTl ; https://www.facebook.com/GeneralStaff.ua/posts/pfbid0g3iRAPCsS5p13YfjYLK5H6V8RU3HoBcvvC57ker2EUpniPpoQxrHNx2kLCD3Zegcl; https://t.me/dva_majors/57857 ; https://t.me/rybar/65420
+
+ https://t.me/voin_dv/11859  
+
+ https://t.me/voin_dv/11850; https://t.me/DnevnikDesantnika/19297; https://t.me/voin_dv/11861; https://t.me/voin_dv/11859; https://t.me/boris_rozhin/144545 ; https://t.me/voin_dv/11857 ; https://t.me/voin_dv/11858; https://t.me/dva_majors/57849  ; https://t.me/NgP_raZVedka/19491
+
+ https://t.me/mod_russia/45773; https://t.me/dva_majors/57857 ; https://t.me/rybar/65420
+
+ https://t.me/voin_dv/11855
+
+ https://www.facebook.com/GeneralStaff.ua/posts/pfbid02fmLCqXTQubdoF4To49Ki2LmC1zKJhbMZsU5z6iSZkgAcXcdyejjXq2cqsGFMSVaTl; https://www.facebook.com/GeneralStaff.ua/posts/pfbid0324wjctmDX2TEQfWTi7jRkzhWpR6ybXCERbmRv3z3dFhchdBwdBaXP5wisimh1Fpsl; https://www.facebook.com/GeneralStaff.ua/posts/pfbid0g3iRAPCsS5p13YfjYLK5H6V8RU3HoBcvvC57ker2EUpniPpoQxrHNx2kLCD3Zegcl
+
+ https://t.me/wargonzo/23180; https://t.me/dva_majors/57857 ; https://t.me/rybar/65420
+
+ https://www.youtube.com/watch?v=aDXWlQ2K0dM ; https://armyinform.com dot ua/2024/11/15/krov-v-obmin-na-terytoriyi-taktyka-rosiyan-povnistyu-analogichna-radyanskij/
+
+ https://www.facebook.com/GeneralStaff.ua/posts/pfbid02fmLCqXTQubdoF4To49Ki2LmC1zKJhbMZsU5z6iSZkgAcXcdyejjXq2cqsGFMSVaTl
+
+ https://t.me/DnevnikDesantnika/19277; https://t.me/tass_agency/285512; https://ria dot ru/20241116/svo-1984127858.html
+
+ https://t.me/boris_rozhin/144522
+
+ https://t.me/ButusovPlus/15054; https://t.me/NgP_raZVedka/19492; https://notes.citeam dot org/mobi-in-russia-2
+
+ https://t.me/kiber_boroshno/10597?single; https://t.me/SJTF_Odes/11770
+
+ https://t.me/kpszsu/22967 ; https://www.facebook.com/GeneralStaff.ua/posts/pfbid027RYFDjmX52U7X1FMrDgDGXYXqNaXcU4nZCVUGtyaTYUkbhSgn2xKdF21uxT258AUl 
+
+ https://t.me/kpszsu/22967 ; https://www.facebook.com/GeneralStaff.ua/posts/pfbid027RYFDjmX52U7X1FMrDgDGXYXqNaXcU4nZCVUGtyaTYUkbhSgn2xKdF21uxT258AUl 
+
+ https://t.me/VA_Kyiv/9433; https://t.me/VA_Kyiv/9432; https://t.me/ivan_fedorov_zp/13403
+
+ https://zona dot media/news/2024/11/15/krediti
+
+ https://zona dot media/news/2024/11/15/krediti
+
+ https://www.reuters.com/world/europe/loans-russian-soldiers-fuel-calls-european-banks-quit-2023-02-13/
+
+ https://isw.pub/UkrWar111424
+
+ https://t.me/Z13_Separ/33910; https://t.me/dva_majors/57850; https://t.me/RVvoenkor/80716 ; https://t.me/boris_rozhin/144455; https://t.me/milinfolive/135109 ; https://meduza dot io/news/2024/11/15/sud-priostanovil-ugolovnoe-delo-o-nasilii-protiv-politseyskogo-protiv-z-blogera-egora-guzenko-trinadtsatyy-potomu-chto-on-podpisal-kontrakt-s-minoborony; https://t.me/astrapress/68568;  https://x.com/666_mancer/status/1857476515967152489 ; https://t.me/sotaproject/89896 ; https://t.me/mobilizationnews/20984 ; https://t.me/istories_media/8178 ; https://t.me/bazabazon/32915 
+
+ https://understandingwar.org/backgrounder/russian-offensive-campaign-assessment-october-6-2024
+
+ https://t.me/bazabazon/32017
+
+ https://t.me/Z13_Separ/33912; https://t.me/Z13_Separ/33942; https://t.me/Z13_Separ/33941; https://t.me/Z13_Separ/33819; https://t.me/Z13_Separ/33812
+
+ https://t.me/vchkogpu/52544
