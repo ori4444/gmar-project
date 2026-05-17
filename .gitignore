@@ -27,3 +27,7 @@ Thumbs.db
 
 # Generated output
 data/analysis/timeline.html
+
+# Data and Claude internal files
+data/
+.claude/

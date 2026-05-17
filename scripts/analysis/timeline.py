@@ -1,77 +1,87 @@
 """
 scripts/analysis/timeline.py
 ─────────────────────────────────────────────────────────────────────────────
-Interactive timeline dashboard: attack events  ↔  daily discourse features.
+Single-figure interactive timeline: attack events vs. discourse signals.
 
-Produces a single self-contained HTML file and opens it in the browser.
+Rules:
+  • ONE figure, no subplots.
+  • Attack traces on primary y-axis  (left)  — visible by default.
+  • Discourse traces on secondary y-axis (right) — legendonly by default.
+  • Plotly bundled inline (no CDN / internet dependency).
+  • No browser is opened automatically.
 
 Usage
 -----
-    cd C:\\Users\\ONE1\\Desktop\\Gmar
-    python scripts/analysis/timeline.py
-
-Optional
-    --out PATH     override output path  (default: data/analysis/timeline.html)
-    --no-open      don't auto-open browser
+    python scripts/analysis/timeline.py [--out PATH]
 """
 
 import argparse
 import os
 import sys
-import webbrowser
 from pathlib import Path
 
 import pandas as pd
 import psycopg2
-import numpy as np
 import plotly.graph_objects as go
-from plotly.subplots import make_subplots
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from shared.config import DB_DSN
+from shared.config import (
+    DB_DSN,
+    EVENTS_TABLE, TARGETS_TABLE, ET_TABLE, FEATURES_TABLE,
+    CHANNEL_USERNAME,
+)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  Colour palette
+#  Exact trace names  (must match graphs.py SERIES exactly)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Attacks (primary y, visible by default)
+T_ATTACK_COUNT  = "Attack Count"
+T_ROLLING       = "7-Day Rolling Mean"
+T_FIRE          = "Fire Events"
+T_HIT           = "Hit Confirmed"
+T_SHUTDOWN      = "Shutdowns"
+T_AIRDEF        = "Air Defense Active"
+T_COMBINED      = "Combined Strikes"
+
+# Discourse (secondary y, legendonly by default)
+T_PRE_DRONE     = "Drone Mentions (pre)"
+T_PRE_AIRDEF    = "Air Defense (pre)"
+T_PRE_AIRPORT   = "Airport Closures (pre)"
+T_PRE_UNCERT    = "Uncertainty (pre)"
+T_EN_ATTACK     = "Energy Attack Messages"
+T_EN_CONFIRM    = "Energy Confirmations"
+T_EN_REFINERY   = "Energy Refinery/Depot"
+T_WAR_TOTAL     = "War Messages (total)"
+T_WAR_UKR       = "Ukrainian Strikes on Russia"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Colours
 # ─────────────────────────────────────────────────────────────────────────────
 
 C = dict(
-    # Attack panel
-    attack_bar    = "#4f46e5",
-    wave_line     = "#a5b4fc",
-    fire_marker   = "#ef4444",
-    hit_marker    = "#10b981",
-    shutdown_mark = "#f97316",
-
-    # Attack-type stacked bars
-    drone         = "#3b82f6",
-    missile       = "#dc2626",
-    combined      = "#7c3aed",
-    unknown_type  = "#cbd5e1",
-
-    # Geographic panel
-    area_bar      = "#0891b2",
-    repeated_line = "#f59e0b",
-
-    # Pre-attack discourse
-    pre_drone     = "#0ea5e9",
-    pre_airport   = "#f59e0b",
-    pre_airdef    = "#8b5cf6",
-    pre_uncert    = "#94a3b8",
-
-    # Energy discourse
-    energy_atk    = "#059669",
-    energy_conf   = "#6ee7b7",
-    energy_refin  = "#1e3a2f",
-    energy_other  = "#34d399",
-
-    # War context
-    war_total     = "#94a3b8",
-    war_ukr_ru    = "#334155",
-
-    # Attack-day background bands
-    band_any      = "rgba(79,70,229,0.06)",
-    band_intense  = "rgba(239,68,68,0.11)",
+    attack_bar   = "#4f46e5",
+    rolling      = "#a5b4fc",
+    fire         = "#ef4444",
+    hit          = "#10b981",
+    shutdown     = "#f97316",
+    airdef       = "#f59e0b",
+    combined     = "#7c3aed",
+    # discourse
+    pre_drone    = "#0ea5e9",
+    pre_airdef   = "#8b5cf6",
+    pre_airport  = "#fbbf24",
+    pre_uncert   = "#94a3b8",
+    en_attack    = "#059669",
+    en_confirm   = "#6ee7b7",
+    en_refinery  = "#065f46",
+    war_total    = "#64748b",
+    war_ukr      = "#334155",
+    # background bands
+    band_any     = "rgba(79,70,229,0.05)",
+    band_intense = "rgba(239,68,68,0.10)",
 )
 
 
@@ -84,316 +94,118 @@ def _conn():
 
 
 def load_attacks(conn) -> pd.DataFrame:
-    sql = """
+    sql = f"""
         SELECT
-            attack_date,
-            area,
-            attack_type,
-            target_type,
-            damage_level,
-            fire::int            AS fire,
-            hit_confirmed::int   AS hit_confirmed,
-            shutdown::int        AS shutdown,
-            explosions_reported,
-            repeated_attack::int AS repeated_attack,
-            air_defense_active::int AS air_defense_active,
-            combined_strike::int AS combined_strike
-        FROM attacks
-        ORDER BY attack_date
+            e.attack_date,
+            e.area,
+            e.macro_region,
+            e.damage_level,
+            e.confidence,
+            e.fire_reported::int               AS fire,
+            e.hit_confirmed::int               AS hit_confirmed,
+            e.shutdown_reported::int           AS shutdown,
+            e.explosions_count                 AS explosions_reported,
+            e.air_defense_active::int          AS air_defense_active,
+            e.combined_strike::int             AS combined_strike,
+            COALESCE(
+                string_agg(DISTINCT t.target_type, ' | '
+                           ORDER BY t.target_type), 'unknown'
+            )                                  AS target_type
+        FROM {EVENTS_TABLE} e
+        LEFT JOIN {ET_TABLE}      et ON et.event_id  = e.event_id
+        LEFT JOIN {TARGETS_TABLE} t  ON t.target_id  = et.target_id
+        WHERE e.status = 'active'
+        GROUP BY e.event_id
+        ORDER BY e.attack_date
     """
     df = pd.read_sql(sql, conn, parse_dates=["attack_date"])
     return df
 
 
 def load_discourse(conn) -> pd.DataFrame:
-    sql = """
+    sql = f"""
         SELECT
             feature_date,
-            COALESCE(pre_russia_messages, 0)                  AS pre_total,
-            COALESCE(pre_russia_drone_mentions, 0)            AS pre_drone,
-            COALESCE(pre_russia_drone_air_defense_messages, 0)AS pre_airdef,
-            COALESCE(pre_russia_airport_closure_mentions, 0)  AS pre_airport,
-            COALESCE(pre_russia_uncertainty_mentions, 0)      AS pre_uncert,
-            COALESCE(energy_attack_messages, 0)               AS en_attack,
-            COALESCE(energy_confirmation_messages, 0)         AS en_confirm,
-            COALESCE(energy_explosion_or_fire_mentions, 0)    AS en_explode,
-            COALESCE(energy_refinery_or_oil_depot_messages, 0)AS en_refinery,
-            COALESCE(energy_other_infra_messages, 0)          AS en_other,
-            COALESCE(war_total_messages, 0)                   AS war_total,
-            COALESCE(war_ukrainian_strike_in_russia_messages, 0) AS war_ukr_ru,
-            COALESCE(war_russian_strike_in_ukraine_messages, 0)  AS war_ru_ukr
-        FROM daily_source_discourse_features
-        WHERE source = 'astrapress'
+            COALESCE(pre_drone,   0) AS pre_drone,
+            COALESCE(pre_airdef,  0) AS pre_airdef,
+            COALESCE(pre_airport, 0) AS pre_airport,
+            COALESCE(pre_uncert,  0) AS pre_uncert,
+            COALESCE(en_attack,   0) AS en_attack,
+            COALESCE(en_confirm,  0) AS en_confirm,
+            COALESCE(en_refinery, 0) AS en_refinery,
+            COALESCE(war_total,   0) AS war_total,
+            COALESCE(war_ukr_ru,  0) AS war_ukr_ru
+        FROM {FEATURES_TABLE}
+        WHERE channel = '{CHANNEL_USERNAME}'
         ORDER BY feature_date
     """
-    df = pd.read_sql(sql, conn, parse_dates=["feature_date"])
-    return df
+    return pd.read_sql(sql, conn, parse_dates=["feature_date"])
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  Attack-side aggregation
+#  Aggregation
 # ─────────────────────────────────────────────────────────────────────────────
 
 def aggregate_attacks(raw: pd.DataFrame) -> pd.DataFrame:
+    if raw.empty:
+        return pd.DataFrame(columns=[
+            "attack_date", "attack_count", "unique_areas",
+            "fire_count", "hits", "shutdowns", "air_defense_count",
+            "combined_count", "avg_damage", "rolling_7d",
+        ])
+
     raw = raw.copy()
-    raw["damage_score"] = (
-        raw["damage_level"]
-        .map({"high": 3, "medium": 2, "low": 1})
-        .fillna(0)
-    )
+    raw["damage_score"] = raw["damage_level"].map(
+        {"high": 3, "medium": 2, "low": 1}
+    ).fillna(0)
 
     daily = (
         raw.groupby("attack_date")
         .agg(
-            attack_count      = ("attack_date",        "count"),
-            unique_areas      = ("area",               "nunique"),
-            fire_count        = ("fire",                "sum"),
-            hits              = ("hit_confirmed",       "sum"),
-            shutdowns         = ("shutdown",            "sum"),
-            total_explosions  = ("explosions_reported", "sum"),
-            repeated_count    = ("repeated_attack",     "sum"),
-            air_defense_count = ("air_defense_active",  "sum"),
-            damage_score_sum  = ("damage_score",        "sum"),
-            avg_damage        = ("damage_score",        "mean"),
+            attack_count      = ("attack_date",          "count"),
+            fire_count        = ("fire",                  "sum"),
+            hits              = ("hit_confirmed",         "sum"),
+            shutdowns         = ("shutdown",              "sum"),
+            air_defense_count = ("air_defense_active",    "sum"),
+            combined_count    = ("combined_strike",       "sum"),
+            avg_damage        = ("damage_score",          "mean"),
         )
         .reset_index()
+        .sort_values("attack_date")
+        .reset_index(drop=True)
     )
-
-    # Attack type breakdown per day
-    type_pivot = (
-        raw.groupby(["attack_date", "attack_type"])
-        .size()
-        .unstack(fill_value=0)
-        .reindex(columns=["drone", "missile", "combined", "unknown"], fill_value=0)
-        .reset_index()
-    )
-    daily = daily.merge(type_pivot, on="attack_date", how="left").fillna(0)
-
-    # Derived metrics
-    daily = daily.sort_values("attack_date").reset_index(drop=True)
-    daily["rolling_7d"]      = daily["attack_count"].rolling(7, min_periods=1).mean()
-    daily["repeated_ratio"]  = (
-        daily["repeated_count"] / daily["attack_count"].clip(lower=1)
-    )
-    daily["damage_norm"]     = daily["avg_damage"] / 3.0  # 0-1
-
+    daily["rolling_7d"] = daily["attack_count"].rolling(7, min_periods=1).mean()
     return daily
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  Background bands for attack days
+#  Background bands
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _attack_bands(daily: pd.DataFrame):
-    """
-    Returns a list of (date, is_intense) for every attack day.
-    intense = attack_count >= 75th percentile of non-zero days.
-    """
+    if daily.empty:
+        return []
     nonzero = daily.loc[daily["attack_count"] > 0, "attack_count"]
     threshold = nonzero.quantile(0.75) if len(nonzero) > 4 else 3
-
     bands = []
     for _, row in daily.iterrows():
         if row["attack_count"] > 0:
-            d = row["attack_date"]
-            intense = row["attack_count"] >= threshold
-            bands.append((pd.Timestamp(d), intense))
+            d = pd.Timestamp(row["attack_date"])
+            bands.append((d, row["attack_count"] >= threshold))
     return bands
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  Figure builder
+#  Figure builder  —  single unified figure
 # ─────────────────────────────────────────────────────────────────────────────
 
-ROWS = 6
-ROW_HEIGHTS = [0.28, 0.12, 0.14, 0.22, 0.16, 0.08]
-
-SUBPLOT_TITLES = [
-    "① Attack Volume & Intensity",
-    "② Attack Type Breakdown",
-    "③ Geographic Spread  ·  Repeated Targeting",
-    "④ Pre-Attack Discourse  —  leading indicators",
-    "⑤ Energy Infrastructure Discourse",
-    "⑥ War-Context Volume",
-]
-
-
 def build_figure(daily: pd.DataFrame, disc: pd.DataFrame) -> go.Figure:
-    fig = make_subplots(
-        rows=ROWS, cols=1,
-        shared_xaxes=True,
-        row_heights=ROW_HEIGHTS,
-        subplot_titles=SUBPLOT_TITLES,
-        vertical_spacing=0.03,
-        specs=[[{"secondary_y": True}]] * ROWS,
-    )
+    fig = go.Figure()
 
-    # ── shared hover style ──────────────────────────────────────────────────
-    hov = dict(mode="x unified")
+    atk_x  = daily["attack_date"]   if not daily.empty else pd.Series([], dtype="datetime64[ns]")
+    disc_x = disc["feature_date"]   if not disc.empty  else pd.Series([], dtype="datetime64[ns]")
 
-    atk_x  = daily["attack_date"]
-    disc_x = disc["feature_date"]
-
-    # ────────────────────────────────────────────────────────────────────────
-    #  Row 1 — Attack volume & intensity
-    # ────────────────────────────────────────────────────────────────────────
-
-    # Colour each bar by avg damage score (green → amber → red)
-    bar_colors = daily["avg_damage"].apply(
-        lambda v: (
-            "#16a34a" if v < 1.5 else
-            "#d97706" if v < 2.5 else
-            "#dc2626"
-        )
-    )
-
-    fig.add_trace(go.Bar(
-        x=atk_x, y=daily["attack_count"],
-        name="Attack count",
-        marker_color=bar_colors,
-        opacity=0.85,
-        hovertemplate=(
-            "<b>%{x|%d %b %Y}</b><br>"
-            "Attacks: <b>%{y}</b><extra></extra>"
-        ),
-        legendgroup="attacks",
-    ), row=1, col=1, secondary_y=False)
-
-    fig.add_trace(go.Scatter(
-        x=atk_x, y=daily["rolling_7d"],
-        name="7-day rolling mean",
-        mode="lines",
-        line=dict(color=C["wave_line"], width=2, dash="dot"),
-        hovertemplate="%{y:.1f}<extra>7d mean</extra>",
-        legendgroup="attacks",
-    ), row=1, col=1, secondary_y=False)
-
-    # Fire / hit / shutdown markers on secondary y (invisible axis, just for positioning)
-    for col_name, symbol, color, label in [
-        ("fire_count",  "triangle-up",    C["fire_marker"],   "Fire events"),
-        ("hits",        "circle",         C["hit_marker"],    "Hit confirmed"),
-        ("shutdowns",   "square",         C["shutdown_mark"], "Shutdowns"),
-    ]:
-        mask = daily[col_name] > 0
-        fig.add_trace(go.Scatter(
-            x=atk_x[mask],
-            y=daily.loc[mask, col_name],
-            name=label,
-            mode="markers",
-            marker=dict(symbol=symbol, size=9, color=color,
-                        line=dict(color="white", width=1)),
-            hovertemplate=f"{label}: %{{y}}<extra></extra>",
-            legendgroup="events",
-        ), row=1, col=1, secondary_y=True)
-
-    # ────────────────────────────────────────────────────────────────────────
-    #  Row 2 — Attack type breakdown
-    # ────────────────────────────────────────────────────────────────────────
-
-    for atk_type, color in [
-        ("drone",    C["drone"]),
-        ("missile",  C["missile"]),
-        ("combined", C["combined"]),
-        ("unknown",  C["unknown_type"]),
-    ]:
-        if atk_type in daily.columns and daily[atk_type].sum() > 0:
-            fig.add_trace(go.Bar(
-                x=atk_x, y=daily[atk_type],
-                name=atk_type.title(),
-                marker_color=color,
-                hovertemplate=f"{atk_type.title()}: %{{y}}<extra></extra>",
-                legendgroup="types",
-            ), row=2, col=1, secondary_y=False)
-
-    fig.update_layout(barmode="stack")  # applies globally; row-level stacking handled below
-
-    # ────────────────────────────────────────────────────────────────────────
-    #  Row 3 — Geographic spread + repeated targeting
-    # ────────────────────────────────────────────────────────────────────────
-
-    fig.add_trace(go.Bar(
-        x=atk_x, y=daily["unique_areas"],
-        name="Unique areas hit",
-        marker_color=C["area_bar"],
-        opacity=0.7,
-        hovertemplate="Areas: <b>%{y}</b><extra></extra>",
-        legendgroup="geo",
-    ), row=3, col=1, secondary_y=False)
-
-    fig.add_trace(go.Scatter(
-        x=atk_x, y=(daily["repeated_ratio"] * 100).round(1),
-        name="Repeated targeting %",
-        mode="lines+markers",
-        line=dict(color=C["repeated_line"], width=2),
-        marker=dict(size=5),
-        hovertemplate="Repeated: <b>%{y:.0f}%%</b><extra></extra>",
-        legendgroup="geo",
-    ), row=3, col=1, secondary_y=True)
-
-    # ────────────────────────────────────────────────────────────────────────
-    #  Row 4 — Pre-attack discourse  (key leading-indicator panel)
-    # ────────────────────────────────────────────────────────────────────────
-
-    for col_name, color, label, dash in [
-        ("pre_drone",   C["pre_drone"],   "Pre-signal: drone mentions",   "solid"),
-        ("pre_airdef",  C["pre_airdef"],  "Pre-signal: air defense",      "solid"),
-        ("pre_airport", C["pre_airport"], "Pre-signal: airport closures", "dash"),
-        ("pre_uncert",  C["pre_uncert"],  "Pre-signal: uncertainty",      "dot"),
-    ]:
-        fig.add_trace(go.Scatter(
-            x=disc_x, y=disc[col_name],
-            name=label,
-            mode="lines",
-            line=dict(color=color, width=2, dash=dash),
-            fill="tozeroy" if dash == "solid" else None,
-            fillcolor=color.replace(")", ",0.15)").replace("rgb", "rgba")
-                        if "rgb" in color else
-                        f"rgba({int(color[1:3],16)},"
-                        f"{int(color[3:5],16)},"
-                        f"{int(color[5:7],16)},0.12)",
-            hovertemplate=f"{label}: <b>%{{y}}</b><extra></extra>",
-            legendgroup="pre",
-        ), row=4, col=1, secondary_y=False)
-
-    # ────────────────────────────────────────────────────────────────────────
-    #  Row 5 — Energy discourse
-    # ────────────────────────────────────────────────────────────────────────
-
-    for col_name, color, label in [
-        ("en_attack",   C["energy_atk"],   "Energy: attack msgs"),
-        ("en_confirm",  C["energy_conf"],  "Energy: confirmations"),
-        ("en_refinery", C["energy_refin"], "Energy: refinery/depot"),
-        ("en_other",    C["energy_other"], "Energy: other infra"),
-    ]:
-        fig.add_trace(go.Bar(
-            x=disc_x, y=disc[col_name],
-            name=label,
-            marker_color=color,
-            hovertemplate=f"{label}: <b>%{{y}}</b><extra></extra>",
-            legendgroup="energy",
-        ), row=5, col=1, secondary_y=False)
-
-    # ────────────────────────────────────────────────────────────────────────
-    #  Row 6 — War context
-    # ────────────────────────────────────────────────────────────────────────
-
-    for col_name, color, label in [
-        ("war_total",  C["war_total"],  "War messages (total)"),
-        ("war_ukr_ru", C["war_ukr_ru"], "Ukrainian strikes on Russia"),
-    ]:
-        fig.add_trace(go.Scatter(
-            x=disc_x, y=disc[col_name],
-            name=label,
-            mode="lines",
-            line=dict(color=color, width=1.5),
-            hovertemplate=f"{label}: <b>%{{y}}</b><extra></extra>",
-            legendgroup="war",
-        ), row=6, col=1, secondary_y=False)
-
-    # ────────────────────────────────────────────────────────────────────────
-    #  Attack-day background bands  (drawn across ALL rows)
-    # ────────────────────────────────────────────────────────────────────────
-
+    # ── Attack-day background bands ───────────────────────────────────────────
     for ts, intense in _attack_bands(daily):
         fig.add_vrect(
             x0=ts - pd.Timedelta(hours=12),
@@ -403,42 +215,133 @@ def build_figure(daily: pd.DataFrame, disc: pd.DataFrame) -> go.Figure:
             layer="below",
         )
 
-    # ────────────────────────────────────────────────────────────────────────
-    #  Layout
-    # ────────────────────────────────────────────────────────────────────────
+    # ── ATTACK TRACES  (primary y, visible) ──────────────────────────────────
+
+    # Colour each bar by avg damage
+    bar_colors = (
+        daily["avg_damage"].apply(
+            lambda v: "#16a34a" if v < 1.5 else "#d97706" if v < 2.5 else "#dc2626"
+        )
+        if not daily.empty else []
+    )
+
+    fig.add_trace(go.Bar(
+        x=atk_x, y=daily["attack_count"] if not daily.empty else [],
+        name=T_ATTACK_COUNT,
+        marker_color=bar_colors,
+        opacity=0.80,
+        yaxis="y",
+        visible=True,
+        hovertemplate="<b>%{x|%d %b %Y}</b><br>Attacks: <b>%{y}</b><extra></extra>",
+    ))
+
+    fig.add_trace(go.Scatter(
+        x=atk_x, y=daily["rolling_7d"] if not daily.empty else [],
+        name=T_ROLLING,
+        mode="lines",
+        line=dict(color=C["rolling"], width=2.5, dash="dot"),
+        yaxis="y",
+        visible=True,
+        hovertemplate="7-day avg: %{y:.1f}<extra></extra>",
+    ))
+
+    # Marker traces (fire / hit / shutdown / air defense)
+    _markers = [
+        ("fire_count",       T_FIRE,     "triangle-up",  C["fire"],     True),
+        ("hits",             T_HIT,      "circle",       C["hit"],      True),
+        ("shutdowns",        T_SHUTDOWN, "square",       C["shutdown"], True),
+        ("air_defense_count",T_AIRDEF,   "diamond",      C["airdef"],   True),
+    ]
+    for col, name, symbol, color, default_vis in _markers:
+        y_vals = daily[col] if not daily.empty else []
+        x_vals = atk_x
+        fig.add_trace(go.Scatter(
+            x=x_vals, y=y_vals,
+            name=name,
+            mode="markers",
+            marker=dict(symbol=symbol, size=10, color=color,
+                        line=dict(color="white", width=1.5)),
+            yaxis="y",
+            visible=True,
+            hovertemplate=f"{name}: %{{y}}<extra></extra>",
+        ))
+
+    fig.add_trace(go.Bar(
+        x=atk_x, y=daily["combined_count"] if not daily.empty else [],
+        name=T_COMBINED,
+        marker_color=C["combined"],
+        opacity=0.70,
+        yaxis="y",
+        visible="legendonly",
+        hovertemplate="Combined: <b>%{y}</b><extra></extra>",
+    ))
+
+    # ── DISCOURSE TRACES  (secondary y, legendonly) ───────────────────────────
+
+    _disc_lines = [
+        ("pre_drone",  T_PRE_DRONE,   C["pre_drone"],   "solid"),
+        ("pre_airdef", T_PRE_AIRDEF,  C["pre_airdef"],  "solid"),
+        ("pre_airport",T_PRE_AIRPORT, C["pre_airport"], "dash"),
+        ("pre_uncert", T_PRE_UNCERT,  C["pre_uncert"],  "dot"),
+        ("en_attack",  T_EN_ATTACK,   C["en_attack"],   "solid"),
+        ("en_confirm", T_EN_CONFIRM,  C["en_confirm"],  "solid"),
+        ("en_refinery",T_EN_REFINERY, C["en_refinery"], "dash"),
+        ("war_total",  T_WAR_TOTAL,   C["war_total"],   "dot"),
+        ("war_ukr_ru", T_WAR_UKR,     C["war_ukr"],     "dash"),
+    ]
+
+    for col, name, color, dash in _disc_lines:
+        y_vals = disc[col] if (not disc.empty and col in disc.columns) else []
+        fig.add_trace(go.Scatter(
+            x=disc_x, y=y_vals,
+            name=name,
+            mode="lines",
+            line=dict(color=color, width=1.8, dash=dash),
+            yaxis="y2",
+            visible="legendonly",
+            hovertemplate=f"{name}: <b>%{{y}}</b><extra></extra>",
+        ))
+
+    # ── Layout ────────────────────────────────────────────────────────────────
 
     fig.update_layout(
-        title=dict(
-            text="<b>Attack Timeline vs Daily Discourse Signals</b>",
-            font=dict(size=22, family="'Inter', 'Segoe UI', sans-serif",
-                      color="#0f172a"),
-            x=0.01,
-        ),
-        height=1100,
+        autosize=True,
         paper_bgcolor="#f8fafc",
         plot_bgcolor="#ffffff",
-        font=dict(family="'Inter', 'Segoe UI', sans-serif",
-                  size=12, color="#334155"),
-        legend=dict(
-            orientation="v",
-            x=1.01, y=1,
-            bgcolor="rgba(255,255,255,0.9)",
-            bordercolor="#e2e8f0",
-            borderwidth=1,
-            font=dict(size=11),
-            tracegroupgap=14,
-        ),
-        hovermode="x unified",
-        hoverlabel=dict(
-            bgcolor="white",
-            bordercolor="#e2e8f0",
-            font=dict(size=12, color="#1e293b"),
-        ),
-        barmode="stack",
+        font=dict(family="'Inter','Segoe UI',sans-serif", size=12, color="#334155"),
 
-        # Range selector + slider on the shared x-axis
-        xaxis6=dict(
-            rangeslider=dict(visible=True, thickness=0.04),
+        title=dict(
+            text="<b>Attack Timeline & Discourse Signals</b>",
+            font=dict(size=18, color="#0f172a"),
+            x=0.01,
+        ),
+
+        # Primary y — attacks
+        yaxis=dict(
+            title="Attacks / Events",
+            side="left",
+            showgrid=True,
+            gridcolor="#e2e8f0",
+            gridwidth=1,
+            zeroline=False,
+            tickfont=dict(size=11),
+        ),
+
+        # Secondary y — discourse (right side, independent scale)
+        yaxis2=dict(
+            title="Messages",
+            side="right",
+            overlaying="y",
+            showgrid=False,
+            zeroline=False,
+            tickfont=dict(size=11, color="#94a3b8"),
+            title_font=dict(color="#94a3b8"),
+        ),
+
+        xaxis=dict(
+            showgrid=True,
+            gridcolor="#e2e8f0",
+            rangeslider=dict(visible=True, thickness=0.05),
             rangeselector=dict(
                 buttons=[
                     dict(count=1,  label="1m", step="month", stepmode="backward"),
@@ -452,73 +355,77 @@ def build_figure(daily: pd.DataFrame, disc: pd.DataFrame) -> go.Figure:
             ),
         ),
 
-        margin=dict(l=60, r=220, t=70, b=60),
+        legend=dict(
+            orientation="v",
+            x=1.08, y=1,
+            bgcolor="rgba(255,255,255,0.92)",
+            bordercolor="#e2e8f0",
+            borderwidth=1,
+            font=dict(size=11),
+            tracegroupgap=10,
+        ),
+
+        hovermode="x unified",
+        hoverlabel=dict(
+            bgcolor="white",
+            bordercolor="#e2e8f0",
+            font=dict(size=12, color="#1e293b"),
+        ),
+
+        barmode="overlay",
+        margin=dict(l=55, r=80, t=55, b=50),
     )
-
-    # Y-axis labels
-    _yax = dict(
-        showgrid=True,
-        gridcolor="#f1f5f9",
-        gridwidth=1,
-        zeroline=False,
-        tickfont=dict(size=10),
-    )
-
-    fig.update_yaxes(**_yax)
-
-    fig.update_yaxes(title_text="Attacks",      row=1, col=1, secondary_y=False)
-    fig.update_yaxes(title_text="Events",       row=1, col=1, secondary_y=True,
-                     showgrid=False)
-    fig.update_yaxes(title_text="Count",        row=2, col=1, secondary_y=False)
-    fig.update_yaxes(title_text="Areas",        row=3, col=1, secondary_y=False)
-    fig.update_yaxes(title_text="Repeated %",   row=3, col=1, secondary_y=True,
-                     showgrid=False, ticksuffix="%")
-    fig.update_yaxes(title_text="Messages",     row=4, col=1, secondary_y=False)
-    fig.update_yaxes(title_text="Messages",     row=5, col=1, secondary_y=False)
-    fig.update_yaxes(title_text="Messages",     row=6, col=1, secondary_y=False)
-
-    # Subplot title styling
-    for ann in fig.layout.annotations:
-        ann.update(font=dict(size=13, color="#475569", family="'Inter','Segoe UI',sans-serif"),
-                   x=0.0, xanchor="left")
 
     return fig
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  Annotation: summary stats box
+#  HTML shell — fills QWebEngineView completely
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _add_summary(fig: go.Figure, daily: pd.DataFrame, disc: pd.DataFrame):
-    total_attacks = int(daily["attack_count"].sum())
-    date_range    = f"{daily['attack_date'].min().date()} → {daily['attack_date'].max().date()}"
-    attack_days   = int((daily["attack_count"] > 0).sum())
-    avg_per_day   = daily.loc[daily["attack_count"] > 0, "attack_count"].mean()
-    disc_days     = len(disc)
-
-    text = (
-        f"<b>Dataset summary</b><br>"
-        f"Period: {date_range}<br>"
-        f"Total attacks recorded: <b>{total_attacks}</b><br>"
-        f"Days with ≥1 attack: <b>{attack_days}</b> "
-        f"({100*attack_days/max(len(daily),1):.0f}%)<br>"
-        f"Avg attacks on attack days: <b>{avg_per_day:.1f}</b><br>"
-        f"Discourse days available: <b>{disc_days}</b>"
-    )
-
-    fig.add_annotation(
-        text=text,
-        align="left",
-        showarrow=False,
-        x=1.01, y=0.98,
-        xref="paper", yref="paper",
-        xanchor="left", yanchor="top",
-        bgcolor="white",
-        bordercolor="#e2e8f0",
-        borderwidth=1,
-        borderpad=10,
-        font=dict(size=11, color="#475569"),
-    )
+_HTML_WRAPPER = """\
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body {{
+    margin: 0; padding: 0;
+    width: 100%; height: 100%;
+    overflow: hidden;
+    background: #f8fafc;
+  }}
+  #chart {{
+    width: 100%;
+    height: 100%;
+  }}
+</style>
+</head>
+<body>
+{plotly_div}
+<script>
+  (function resize() {{
+    var gd = document.getElementById('chart');
+    if (gd && gd._fullLayout) {{
+      Plotly.relayout(gd, {{autosize: true,
+        width:  window.innerWidth,
+        height: window.innerHeight - 2
+      }});
+    }}
+  }})();
+  window.addEventListener('resize', function() {{
+    var gd = document.getElementById('chart');
+    if (gd && gd._fullLayout) {{
+      Plotly.relayout(gd, {{
+        width:  window.innerWidth,
+        height: window.innerHeight - 2
+      }});
+    }}
+  }});
+</script>
+</body>
+</html>
+"""
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -526,62 +433,41 @@ def _add_summary(fig: go.Figure, daily: pd.DataFrame, disc: pd.DataFrame):
 # ─────────────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="Attack ↔ Discourse timeline dashboard")
-    parser.add_argument("--out", default=None,
-                        help="Output HTML path (default: data/analysis/timeline.html)")
-    parser.add_argument("--no-open", action="store_true",
-                        help="Don't open browser automatically")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--out", default=None)
     args = parser.parse_args()
 
-    # Resolve output path
     root = Path(__file__).resolve().parents[2]
     out_path = Path(args.out) if args.out else root / "data" / "analysis" / "timeline.html"
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
-    print("Connecting to database…")
     conn = _conn()
-
-    print("Loading attack data…")
     raw_attacks = load_attacks(conn)
-    print(f"  → {len(raw_attacks):,} attack records")
-
-    print("Loading discourse features…")
-    disc = load_discourse(conn)
-    print(f"  → {len(disc):,} discourse days")
-
+    disc        = load_discourse(conn)
     conn.close()
 
-    if raw_attacks.empty:
-        print("No attack data found — check your database connection.")
-        return
-
-    print("Aggregating…")
     daily = aggregate_attacks(raw_attacks)
+    fig   = build_figure(daily, disc)
 
-    print("Building figure…")
-    fig = build_figure(daily, disc)
-    _add_summary(fig, daily, disc)
-
-    print(f"Writing → {out_path}")
-    fig.write_html(
-        str(out_path),
-        include_plotlyjs="cdn",
-        full_html=True,
+    div_html = fig.to_html(
+        full_html=False,
+        include_plotlyjs=True,   # fully inline — no internet needed
+        div_id="chart",
         config=dict(
             displayModeBar=True,
             modeBarButtonsToRemove=["lasso2d", "select2d"],
             scrollZoom=True,
+            responsive=True,
             toImageButtonOptions=dict(
-                format="png", filename="attack_discourse_timeline",
-                height=1100, width=1800, scale=2,
+                format="png", filename="timeline",
+                height=900, width=1800, scale=2,
             ),
         ),
     )
-
-    if not args.no_open:
-        webbrowser.open(out_path.as_uri())
-
-    print("Done.")
+    out_path.write_text(
+        _HTML_WRAPPER.format(plotly_div=div_html),
+        encoding="utf-8",
+    )
 
 
 if __name__ == "__main__":
