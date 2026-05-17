@@ -24,3 +24,19 @@ def translate_to_hebrew(text: str) -> str:
         return GoogleTranslator(source="auto", target=TRANSLATION_TARGET).translate(text)
     except Exception as exc:
         return f"[Translation failed: {exc}]"
+
+
+def translate_to_english(text: str) -> str:
+    if not ENABLE_TRANSLATION:
+        return ""
+
+    if not text.strip():
+        return ""
+
+    if GoogleTranslator is None:
+        return "[Translation unavailable: install deep-translator]"
+
+    try:
+        return GoogleTranslator(source="auto", target="en").translate(text)
+    except Exception as exc:
+        return f"[Translation failed: {exc}]"

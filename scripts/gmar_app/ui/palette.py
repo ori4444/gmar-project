@@ -1,64 +1,69 @@
 # ── Palette ──────────────────────────────────────────────────────────────────
-# Vivid, high-contrast palette with thick borders and bold typography.
+# Warm cream theme — single surface, dark text, soft-brown dividers.
 
-BG          = "#0f172a"   # deep navy — main window background
-SIDEBAR_BG  = "#1e293b"   # slightly lighter — sidebar
-CARD_BG     = "#1e293b"   # card / panel background
-CARD_BORDER = "#334155"   # panel border (3 px)
+# ── Surfaces (one cream everywhere) ──────────────────────────────────────────
+BG          = "#fdf8f1"   # warm light cream — all surfaces
+SIDEBAR_BG  = "#fdf8f1"   # same cream
+CARD_BG     = "#fdf8f1"   # same cream (no separate card tones)
+CARD_BORDER = "transparent"
 
-# Accent colors
-INDIGO      = "#6366f1"
-INDIGO_D    = "#4f46e5"
-INDIGO_L    = "#e0e7ff"
+# ── Brown divider — the only border/line color ────────────────────────────────
+# Used for: section separators, sidebar boundary, outer frame, input borders.
+DIVIDER     = "#c4a07a"   # sandy warm brown  (3 px thick, everywhere)
 
-GREEN       = "#22c55e"
-GREEN_D     = "#16a34a"
-GREEN_BG    = "#052e16"
+# ── Accent colors (adjusted for legibility on cream) ─────────────────────────
+INDIGO      = "#4338ca"
+INDIGO_D    = "#3730a3"
+INDIGO_L    = "#c7d2fe"
 
-RED         = "#ef4444"
-RED_D       = "#dc2626"
-RED_BG      = "#450a0a"
+GREEN       = "#15803d"
+GREEN_D     = "#166534"
+GREEN_BG    = "#dcfce7"
 
-AMBER       = "#f59e0b"
-AMBER_BG    = "#451a03"
+RED         = "#dc2626"
+RED_D       = "#b91c1c"
+RED_BG      = "#fee2e2"
 
-CYAN        = "#06b6d4"
-VIOLET      = "#a855f7"
+AMBER       = "#b45309"
+AMBER_BG    = "#fef3c7"
 
-# Text
-TXT         = "#f1f5f9"   # primary
-TXT2        = "#94a3b8"   # secondary
-TXT3        = "#475569"   # muted
+CYAN        = "#0e7490"
+VIOLET      = "#6d28d9"
 
-# Section nav highlight
+# ── Text (dark on cream) ──────────────────────────────────────────────────────
+TXT         = "#2a1a08"   # very dark warm brown
+TXT2        = "#7a5c38"   # medium warm brown
+TXT3        = "#b09070"   # muted / placeholder
+
+# ── Section nav ───────────────────────────────────────────────────────────────
 NAV_ACTIVE_BG  = INDIGO
 NAV_ACTIVE_TXT = "#ffffff"
 NAV_IDLE_TXT   = TXT2
 
-# Input fields
-INPUT_BG     = "#0f172a"
-INPUT_BORDER = "#475569"
+# ── Input fields ──────────────────────────────────────────────────────────────
+INPUT_BG     = "#f2e6d2"   # slightly deeper cream
+INPUT_BORDER = DIVIDER
 INPUT_FOCUS  = INDIGO
 
-# Per-value accent maps
+# ── Per-value accent maps ─────────────────────────────────────────────────────
 ATK_COLORS = {
-    "drone":    "#3b82f6",
-    "missile":  "#ef4444",
-    "combined": "#a855f7",
-    "unknown":  TXT3,
+    "drone":    "#2563eb",
+    "missile":  "#dc2626",
+    "combined": "#6d28d9",
+    "unknown":  "#b09070",
 }
 DMG_COLORS = {
-    "low":    "#22c55e",
-    "medium": "#f59e0b",
-    "high":   "#ef4444",
+    "low":    "#15803d",
+    "medium": "#b45309",
+    "high":   "#dc2626",
 }
 SCALE_COLORS = {
-    "few":     "#60a5fa",
-    "swarm":   "#3b82f6",
-    "massive": "#1d4ed8",
-    "":        TXT3,
+    "few":     "#2563eb",
+    "swarm":   "#1d4ed8",
+    "massive": "#1e3a8a",
+    "":        "#b09070",
 }
 
-# Fonts
+# ── Fonts ─────────────────────────────────────────────────────────────────────
 FONT_FAMILY = "Segoe UI"
 FONT_SIZE   = 11

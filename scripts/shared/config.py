@@ -6,12 +6,18 @@ CHANNEL_USERNAME = "astrapress"
 SESSION_NAME = "astra_session"
 
 DB_DSN = "postgresql://postgres.bzrrkrqqsfiwejrjiijs:Ori1999cohen1@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
-TABLE_NAME = "attacks"
 
 LOCAL_TZ = timezone(timedelta(hours=3))
 
 ONLY_RUSSIA = True
 UPDATE_WINDOW_HOURS = 48
+
+# Normalized schema table names (new architecture)
+EVENTS_TABLE   = "attack_events"
+TARGETS_TABLE  = "targets"
+FEATURES_TABLE  = "daily_features"
+ET_TABLE        = "event_targets"
+EU_TABLE       = "event_updates"
 
 ENABLE_TRANSLATION = True
 TRANSLATION_TARGET = "iw"
