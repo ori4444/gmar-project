@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from datetime import datetime, timedelta, timezone
 
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QApplication
+from PySide6.QtWidgets import QApplication, QInputDialog, QLineEdit
 from qasync import QEventLoop
 
 from shared.config import (
@@ -46,6 +46,15 @@ from gmar_app.ui.multi_target import MultiTargetPage
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+
+def _ask_qt(prompt: str, title: str = "Telegram Authentication", echo: bool = True) -> str:
+    """Show a Qt input dialog for Telegram auth. Used when no session file exists."""
+    mode = QLineEdit.Normal if echo else QLineEdit.Password
+    text, ok = QInputDialog.getText(None, title, prompt, mode)
+    if not ok or not text.strip():
+        raise RuntimeError("Authentication cancelled")
+    return text.strip()
+
 
 def validate_config():
     errors = []
@@ -115,7 +124,11 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
 
     try:
         client = build_client()
-        await client.start()
+        await client.start(
+            phone=lambda: _ask_qt("Enter your phone number (e.g. +1234567890):"),
+            code_callback=lambda: _ask_qt("Enter the code Telegram sent you:"),
+            password=lambda: _ask_qt("Enter your 2FA password:", echo=False),
+        )
         page.append_log("Telegram connected")
 
         page.set_status("Connecting to database…")
