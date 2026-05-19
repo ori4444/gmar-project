@@ -79,7 +79,7 @@ def _group_label(text: str) -> QLabel:
     lbl = QLabel(text)
     lbl.setStyleSheet(
         f"color:{P.TXT2}; font-size:10px; font-weight:900; "
-        f"letter-spacing:1px; border:none; direction:rtl; "
+        f"letter-spacing:1px; border:none; "
         f"padding-top:6px;"
     )
     return lbl
@@ -127,12 +127,12 @@ class GraphsPage(QWidget):
         hdr = QLabel("📊  Graph Layers")
         hdr.setStyleSheet(
             f"color:{P.TXT}; font-size:14px; font-weight:900; "
-            f"border:none; direction:rtl;"
+            f"border:none;"
         )
         lay.addWidget(hdr)
 
         sub = QLabel("Select which series to display")
-        sub.setStyleSheet(f"color:{P.TXT3}; font-size:11px; border:none; direction:rtl;")
+        sub.setStyleSheet(f"color:{P.TXT3}; font-size:11px; border:none;")
         lay.addWidget(sub)
 
         lay.addSpacing(4)
@@ -183,7 +183,7 @@ class GraphsPage(QWidget):
         self._status_lbl = QLabel("")
         self._status_lbl.setWordWrap(True)
         self._status_lbl.setStyleSheet(
-            f"color:{P.TXT2}; font-size:11px; border:none; direction:rtl; padding-top:4px;"
+            f"color:{P.TXT2}; font-size:11px; border:none; padding-top:4px;"
         )
         lay.addWidget(self._status_lbl)
 
@@ -194,7 +194,7 @@ class GraphsPage(QWidget):
         cb = QCheckBox(label)
         cb.setChecked(default_on)
         cb.setStyleSheet(
-            f"QCheckBox {{ color:{P.TXT}; font-size:12px; direction:rtl; border:none; }}"
+            f"QCheckBox {{ color:{P.TXT}; font-size:12px; border:none; }}"
             f"QCheckBox::indicator {{ width:15px; height:15px; border-radius:3px; "
             f"border:2px solid {color}; }}"
             f"QCheckBox::indicator:checked   {{ background:{color}; }}"
@@ -219,7 +219,7 @@ class GraphsPage(QWidget):
         tb.setContentsMargins(16, 6, 16, 6)
         hdr_lbl = QLabel("Graphs & Analysis — Interactive Timeline")
         hdr_lbl.setStyleSheet(
-            f"color:{P.TXT}; font-size:15px; font-weight:800; border:none; direction:rtl;"
+            f"color:{P.TXT}; font-size:15px; font-weight:800; border:none;"
         )
         hdr_icon = QLabel("📈")
         hdr_icon.setStyleSheet("font-size:20px; border:none;")
@@ -343,5 +343,5 @@ class GraphsPage(QWidget):
         if color:
             self._status_lbl.setStyleSheet(
                 f"color:{color}; font-size:11px; border:none; "
-                f"direction:rtl; padding-top:4px;"
+                f"padding-top:4px;"
             )

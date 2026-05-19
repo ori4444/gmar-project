@@ -173,7 +173,6 @@ class StartupDialog(QDialog):
                 background:{P.INDIGO}; color:white;
                 border:none; border-radius:12px;
                 font-size:17px; font-weight:800;
-                direction: rtl;
             }}
             QPushButton#GoBtn:hover  {{ background:{P.INDIGO_D}; }}
             QCalendarWidget {{ background:{P.CARD_BG}; color:{P.TXT}; }}

@@ -473,17 +473,20 @@ def fetch_attack_by_id(conn, record_id: int) -> dict | None:
     return dict(row) if row else None
 
 
-def fetch_recent_attacks(conn, limit: int = 5) -> list[dict]:
+def fetch_recent_attacks(conn, limit: int = 5, for_date=None) -> list[dict]:
+    date_clause = "AND e.attack_date <= %s" if for_date is not None else ""
+    params = (for_date, limit) if for_date is not None else (limit,)
     with conn.cursor() as cur:
         cur.execute(
             f"""
             {_EVENT_SELECT}
             WHERE e.status = 'active'
+            {date_clause}
             {_EVENT_GROUP}
             ORDER BY e.attack_date DESC NULLS LAST, e.created_at DESC
             LIMIT %s
             """,
-            (limit,),
+            params,
         )
         rows = cur.fetchall()
     return [dict(r) for r in rows]

@@ -1032,7 +1032,12 @@ class AttacksPage(QWidget):
             self.append_log("No database connection.")
             return
         try:
-            recent = self._fetch_recent_cb()
+            attack_date = (
+                self._current_parsed.attack_date
+                if self._current_parsed is not None and getattr(self._current_parsed, "attack_date", None)
+                else None
+            )
+            recent = self._fetch_recent_cb(for_date=attack_date)
         except Exception as exc:
             self.append_log(f"Error loading recent attacks: {exc}")
             return
@@ -1055,6 +1060,22 @@ class AttacksPage(QWidget):
         self.append_log(
             f"Update #{atk.get('attack_id')} — {atk.get('area','?')} | {atk.get('attack_date','?')}"
         )
+
+        # Populate form with the selected attack's existing values.
+        atk_date = atk.get("attack_date")
+        if isinstance(atk_date, date):
+            self._date_edit.setDate(QDate(atk_date.year, atk_date.month, atk_date.day))
+        self._area_combo.set_python_value(atk.get("area") or "")
+        self._target_type_sel.set_python_value(atk.get("target_type") or "")
+        self._drone_scale_sel.set_python_value(atk.get("drone_scale") or "")
+        self._air_def_toggle.set_python_value(atk.get("air_defense_active"))
+        self._fire_toggle.set_python_value(atk.get("fire"))
+        self._shutdown_toggle.set_python_value(atk.get("shutdown"))
+        self._hit_toggle.set_python_value(atk.get("hit_confirmed"))
+        self._combined_toggle.set_python_value(atk.get("combined_strike"))
+        self._explosions_spin.setValue(atk.get("explosions_reported") or 0)
+        self._damage_sel.set_python_value(atk.get("damage_level") or None)
+        self._report_type_sel.set_python_value(atk.get("report_type") or "hearsay")
 
         self._refresh_changes_panel()
 
@@ -1159,7 +1180,7 @@ class AttacksPage(QWidget):
         self._quick_mode = True
         self._quick_conn = conn
         from gmar_app.db import fetch_recent_attacks
-        self.set_fetch_recent_callback(lambda limit=5: fetch_recent_attacks(conn, limit))
+        self.set_fetch_recent_callback(lambda limit=5, for_date=None: fetch_recent_attacks(conn, limit, for_date=for_date))
         self._main_stack.setCurrentIndex(1)
         self._switch_to_insert()
         self._apply_quick_insert_ui()

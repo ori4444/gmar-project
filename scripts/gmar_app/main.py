@@ -121,7 +121,7 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
         page.set_status("Connecting to database…")
         conn = get_conn()
         ensure_schema(conn)
-        page.set_fetch_recent_callback(lambda limit=5: fetch_recent_attacks(conn, limit))
+        page.set_fetch_recent_callback(lambda limit=5, for_date=None: fetch_recent_attacks(conn, limit, for_date=for_date))
         page.append_log("Database ready — starting review")
 
         queue = asyncio.Queue(maxsize=PREFETCH_QUEUE_SIZE)
