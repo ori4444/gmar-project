@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from datetime import datetime, timedelta, timezone
 
 from PySide6.QtGui import QFont
-from PySide6.QtWidgets import QApplication, QInputDialog, QLineEdit
+from PySide6.QtWidgets import QApplication, QDialog, QInputDialog, QLineEdit
 from qasync import QEventLoop
 
 from shared.config import (
@@ -47,13 +47,36 @@ from gmar_app.ui.multi_target import MultiTargetPage
 
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _ask_qt(prompt: str, title: str = "Telegram Authentication", echo: bool = True) -> str:
-    """Show a Qt input dialog for Telegram auth. Used when no session file exists."""
-    mode = QLineEdit.Normal if echo else QLineEdit.Password
-    text, ok = QInputDialog.getText(None, title, prompt, mode)
-    if not ok or not text.strip():
-        raise RuntimeError("Authentication cancelled")
-    return text.strip()
+async def _ask_qt_async(prompt: str, title: str = "Telegram Authentication", echo: bool = True) -> str:
+    """Show a non-blocking Qt input dialog for Telegram auth.
+
+    Uses dlg.open() + asyncio.Future so we never nest an exec() loop inside
+    the qasync event loop — which deadlocks on Windows.
+    """
+    loop = asyncio.get_event_loop()
+    future: asyncio.Future = loop.create_future()
+
+    dlg = QInputDialog()
+    dlg.setWindowTitle(title)
+    dlg.setLabelText(prompt)
+    dlg.setTextEchoMode(QLineEdit.Normal if echo else QLineEdit.Password)
+    dlg.setModal(True)
+
+    def _on_finished(result: int):
+        if future.done():
+            return
+        if result == QDialog.Accepted:
+            val = dlg.textValue().strip()
+            if val:
+                future.set_result(val)
+            else:
+                future.set_exception(RuntimeError("Authentication cancelled"))
+        else:
+            future.set_exception(RuntimeError("Authentication cancelled"))
+
+    dlg.finished.connect(_on_finished)
+    dlg.open()  # non-blocking — control returns immediately
+    return await future
 
 
 def validate_config():
@@ -123,11 +146,20 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
     producer_task = None
 
     try:
+        async def _phone_cb():
+            return await _ask_qt_async("Enter your phone number (e.g. +1234567890):")
+
+        async def _code_cb():
+            return await _ask_qt_async("Enter the code Telegram sent you:")
+
+        async def _password_cb():
+            return await _ask_qt_async("Enter your 2FA password:", echo=False)
+
         client = build_client()
         await client.start(
-            phone=lambda: _ask_qt("Enter your phone number (e.g. +1234567890):"),
-            code_callback=lambda: _ask_qt("Enter the code Telegram sent you:"),
-            password=lambda: _ask_qt("Enter your 2FA password:", echo=False),
+            phone=_phone_cb,
+            code_callback=_code_cb,
+            password=_password_cb,
         )
         page.append_log("Telegram connected")
 
