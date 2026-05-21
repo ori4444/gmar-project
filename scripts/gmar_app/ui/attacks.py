@@ -60,7 +60,7 @@ AREA_OPTIONS = sorted({
     "Tver", "Udomlya", "Yaroslavl",
     # Far East / Siberia
     "Sakhalin Oblast", "Primorsky Krai", "Vladivostok",
-    "Zabaykalsky Krai", "Chita", "Kemerovo", "Tuva", "Tyva Republic",
+    "Zabaykalsky Krai", "Chita", "Kemerovo", "Tuva", "Tyva Republic", "Komi Republic",
 
     # ── Oblast / Krai full names ───────────────────────────────────────────────
     "Tula Oblast", "Ryazan Oblast", "Voronezh Oblast", "Rostov Oblast",
