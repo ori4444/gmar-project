@@ -98,7 +98,7 @@ class HomePage(QWidget):
         info_lbl.setAlignment(Qt.AlignCenter)
         info_lbl.setStyleSheet(
             f"color:{P.TXT3}; font-size:12px; border:none; "
-            f"padding-top:20px;"
+            f"padding-top:20px; direction:rtl;"
         )
         root.addWidget(info_lbl)
 
@@ -128,7 +128,7 @@ class HomePage(QWidget):
         title_lbl = QLabel(title)
         title_lbl.setAlignment(Qt.AlignCenter)
         title_lbl.setStyleSheet(
-            f"color:{P.TXT}; font-size:17px; font-weight:900; border:none;"
+            f"color:{P.TXT}; font-size:17px; font-weight:900; border:none; direction:rtl;"
         )
         lay.addWidget(title_lbl)
 
@@ -137,7 +137,7 @@ class HomePage(QWidget):
         desc_lbl.setWordWrap(True)
         desc_lbl.setStyleSheet(
             f"color:{P.TXT2}; font-size:13px; line-height:1.5; "
-            f"border:none;"
+            f"border:none; direction:rtl;"
         )
         lay.addWidget(desc_lbl)
 
@@ -149,7 +149,7 @@ class HomePage(QWidget):
         go_btn.setStyleSheet(
             f"QPushButton{{background:transparent;color:{color};"
             f"border:2px solid {color};border-radius:11px;"
-            f"font-size:14px;font-weight:800;}}"
+            f"font-size:14px;font-weight:800;direction:rtl;}}"
             f"QPushButton:hover{{background:{color};color:#fff;}}"
             f"QPushButton:pressed{{background:{color}cc;color:#fff;}}"
         )

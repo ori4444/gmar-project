@@ -109,7 +109,7 @@ class DiscoursePage(QWidget):
         hdr = QLabel("Message Ingestion")
         hdr.setStyleSheet(
             f"color:{P.TXT}; font-size:24px; font-weight:900; "
-            f"border:none;"
+            f"border:none; direction:rtl;"
         )
         hdr_row.addStretch()
         hdr_row.addWidget(hdr)
@@ -118,7 +118,7 @@ class DiscoursePage(QWidget):
 
         sub = QLabel("Fetch Telegram messages for the selected date range and save to raw_messages")
         sub.setStyleSheet(
-            f"color:{P.TXT2}; font-size:14px; border:none;"
+            f"color:{P.TXT2}; font-size:14px; border:none; direction:rtl;"
         )
         sub.setAlignment(Qt.AlignRight)
         root.addWidget(sub)
