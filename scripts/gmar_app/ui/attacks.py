@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import asyncio
 from copy import deepcopy
-from datetime import date, timedelta
+from datetime import date
 
 from PySide6.QtCore import QDate, QTimer, Qt
 from PySide6.QtGui import QKeySequence, QShortcut, QTextOption
@@ -426,10 +426,9 @@ class AttacksPage(QWidget):
         date_g.setHorizontalSpacing(14)
         date_g.setVerticalSpacing(10)
 
-        yesterday = date.today() - timedelta(days=1)
-        for row_i, (lbl_txt, attr_name) in enumerate([
-            ("From", "_sp_start_edit"),
-            ("To",   "_sp_end_edit"),
+        for row_i, (lbl_txt, attr_name, default_date) in enumerate([
+            ("From", "_sp_start_edit", date(2024, 1, 1)),
+            ("To",   "_sp_end_edit",   date(2024, 12, 31)),
         ]):
             lbl = QLabel(lbl_txt)
             lbl.setStyleSheet(
@@ -441,7 +440,7 @@ class AttacksPage(QWidget):
             edit = QDateEdit()
             edit.setCalendarPopup(True)
             edit.setDisplayFormat("dd  MMM  yyyy")
-            edit.setDate(QDate(yesterday.year, yesterday.month, yesterday.day))
+            edit.setDate(QDate(default_date.year, default_date.month, default_date.day))
             edit.setFixedHeight(44)
             edit.setStyleSheet(_date_edit_style())
             setattr(self, attr_name, edit)
