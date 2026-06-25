@@ -7,7 +7,10 @@ from datetime import datetime, timedelta, timezone
 
 from qasync import QEventLoop
 
-from shared.config import API_ID, API_HASH, DB_DSN, LOCAL_TZ, PREFETCH_QUEUE_SIZE, REVIEW_MODE
+from shared.config import (
+    API_ID, API_HASH, DB_DSN, LOCAL_TZ, PREFETCH_QUEUE_SIZE, REVIEW_MODE,
+    CHANNEL_USERNAME,
+)
 from shared.telegram_client import build_client, iter_messages
 from shared.text_utils import clean_text
 from db import (
@@ -113,7 +116,7 @@ async def main(mode: str, start_date, end_date):
             for parsed in preliminary:
                 try:
                     existing = find_recent_existing_by_area(
-                        conn, parsed.area, parsed.attack_date, parsed.targets_names,
+                        conn, parsed.area, parsed.attack_date, parsed.target_type,
                     )
 
                     if existing:
@@ -174,28 +177,36 @@ async def main(mode: str, start_date, end_date):
                             continue
 
                         shown += 1
-                        window.load_candidate(
-                            action=action, parsed=parsed, original_text=text,
-                            translated_text=translated, diffs=None, counter=shown,
-                        )
-                        action_code, edited_parsed = await window.async_wait_for_decision()
+                        while True:
+                            window.load_candidate(
+                                action=action, parsed=parsed, original_text=text,
+                                translated_text=translated, diffs=None, counter=shown,
+                            )
+                            action_code, edited_parsed = await window.async_wait_for_decision()
 
-                        if action_code == "q":
-                            window.append_log("User quit")
-                            if producer_task and not producer_task.done():
-                                producer_task.cancel()
-                            return
+                            if action_code == "q":
+                                window.append_log("User quit")
+                                if producer_task and not producer_task.done():
+                                    producer_task.cancel()
+                                return
 
-                        if action_code == "n":
-                            window.append_log(f"Skipped INSERT #{shown}")
-                            continue
+                            if action_code == "n":
+                                window.append_log(f"Skipped INSERT #{shown}")
+                                break
 
-                        if action_code == "y":
-                            try:
-                                insert_attack(conn, edited_parsed.to_db_dict(text))
-                                window.append_log(f"INSERT #{shown}: saved")
-                            except Exception as db_exc:
-                                window.append_log(f"INSERT #{shown}: DB error — {db_exc}")
+                            if action_code in ("y", "yd"):
+                                try:
+                                    insert_attack(conn, edited_parsed.to_db_dict(text))
+                                    window.append_log(f"INSERT #{shown}: saved")
+                                except Exception as db_exc:
+                                    window.append_log(f"INSERT #{shown}: DB error — {db_exc}")
+
+                                if action_code == "yd":
+                                    shown += 1
+                                    # Re-present the same message for another INSERT
+                                    continue
+
+                                break
 
                 except Exception as msg_exc:
                     window.append_log(f"msg {msg_id}: error — {msg_exc}")

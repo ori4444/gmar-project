@@ -260,52 +260,6 @@ AREA_OPTIONS = sorted({
     "Orenburg", "Penza", "Ulyanovsk", "Nizhny Novgorod",
 })
 
-TARGET_OPTIONS = sorted({
-    "Smolensk Oil Depot", "Ryazan Oil Refinery", "Syzran Oil Refinery",
-    "Novokuibyshevsk Oil Refinery", "Ufa Oil Refinery Complex",
-    "KINEF Oil Refinery", "Tuapse Oil Refinery",
-    "Russkaya Compressor Station", "Kalinin Nuclear Power Plant",
-    "Kursk Power Grid", "Novoshakhtinsk Oil Pipeline",
-    "PSP-915 Pumping Station", "Sokhranovka Gas Infrastructure",
-    "Cheboksary Oil Depot", "Oka-Center Oil Depot",
-    "Davydovskaya Compressor Station", "Novopetrovskaya Compressor Station",
-    "Aksinino Pumping Station", "Volgograd Lukoil Refinery",
-    "Yefimovskaya Pipeline Station", "Petrovsk Gas Infrastructure",
-    "Astrakhan Gas Processing Plant", "Ust-Luga Oil Terminal",
-    "Gazprom LPG Terminal (Kazan)", "Aleksin Power Plant (ТЭЦ)",
-    "Kristal Oil Depot (Engels)",
-})
-
-CANONICAL_TARGET_AREA: dict[str, str] = {
-    "Smolensk Oil Depot":               "Smolensk",
-    "Ryazan Oil Refinery":              "Ryazan",
-    "Syzran Oil Refinery":              "Syzran",
-    "Novokuibyshevsk Oil Refinery":     "Novokuibyshevsk",
-    "Ufa Oil Refinery Complex":         "Ufa",
-    "KINEF Oil Refinery":               "Kirishi",
-    "Tuapse Oil Refinery":              "Tuapse",
-    "Russkaya Compressor Station":      "Krasnodar",
-    "Kalinin Nuclear Power Plant":      "Udomlya",
-    "Kursk Power Grid":                 "Kursk",
-    "Novoshakhtinsk Oil Pipeline":      "Novoshakhtinsk",
-    "PSP-915 Pumping Station":          "Serpukhov",
-    "Sokhranovka Gas Infrastructure":   "Chertkovo",
-    "Cheboksary Oil Depot":             "Cheboksary",
-    "Oka-Center Oil Depot":             "Serpukhov",
-    "Davydovskaya Compressor Station":  "Liski",
-    "Novopetrovskaya Compressor Station": "Voronezh",
-    "Aksinino Pumping Station":         "Moscow Oblast",
-    "Volgograd Lukoil Refinery":        "Volgograd",
-    "Yefimovskaya Pipeline Station":    "Leningrad Oblast",
-    "Petrovsk Gas Infrastructure":      "Petrovsk",
-    "Astrakhan Gas Processing Plant":   "Astrakhan",
-    "Ust-Luga Oil Terminal":            "Leningrad Oblast",
-    "Gazprom LPG Terminal (Kazan)":     "Kazan",
-    "Aleksin Power Plant (ТЭЦ)":        "Aleksin",
-    "Kristal Oil Depot (Engels)":       "Engels",
-}
-
-
 # ─────────────────────────────────────────────────────────────────────────────
 #  Custom input widgets
 # ─────────────────────────────────────────────────────────────────────────────
@@ -526,25 +480,9 @@ class CandidateForm(QWidget):
         self.inputs["area"].setFixedHeight(38)
         _field("Area", self.inputs["area"], layout)
 
-        self.inputs["targets_names"] = SmartCombo(TARGET_OPTIONS)
-        self.inputs["targets_names"].setFixedHeight(38)
-        _field("Target", self.inputs["targets_names"], layout)
-
-        # Auto-fill area from canonical target
-        self.inputs["targets_names"].currentTextChanged.connect(
-            self._on_target_changed)
-
         # ── ATTACK ───────────────────────────────────────────────────────────
         layout.addSpacing(6)
         _section("ATTACK", layout)
-
-        self.inputs["attack_type"] = ButtonSelector(
-            ["unknown", "drone", "missile", "combined"],
-            labels={"unknown": "?", "drone": "Drone",
-                    "missile": "Missile", "combined": "Combined"},
-            accents=_ATK_COLORS,
-        )
-        _field("Type", self.inputs["attack_type"], layout)
 
         self.inputs["drone_scale"] = ButtonSelector(
             ["", "few", "swarm", "massive"],
@@ -565,7 +503,6 @@ class CandidateForm(QWidget):
             ("shutdown",          "Shutdown",       False),
             ("hit_confirmed",     "Hit Confirmed",  False),
             ("air_defense_active","Air Defense",    False),
-            ("repeated_attack",   "Repeated",       True),
         ]:
             self.inputs[key] = BoolToggle(nullable=nullable)
             _field(label, self.inputs[key], layout)
@@ -627,13 +564,7 @@ class CandidateForm(QWidget):
         w.setFixedHeight(36)
         return w
 
-    def _on_target_changed(self, text: str):
-        suggested = CANONICAL_TARGET_AREA.get(text.strip())
-        if not suggested:
-            return
-        current = self.inputs["area"].python_value().strip()
-        if not current or current.lower() == "unknown area":
-            self.inputs["area"].set_python_value(suggested)
+
 
     # ── Public API ─────────────────────────────────────────────────────────────
 
@@ -651,16 +582,11 @@ class CandidateForm(QWidget):
                 _from_qdate(self.inputs["attack_date"].date()))
         setattr(obj, "area",
                 self.inputs["area"].python_value())
-        setattr(obj, "targets_names",
-                self.inputs["targets_names"].python_value())
         setattr(obj, "target_type",
                 self.inputs["target_type"].python_value() or "unknown")
-        setattr(obj, "attack_type",
-                self.inputs["attack_type"].python_value() or "unknown")
         ds = self.inputs["drone_scale"].python_value().strip()
         setattr(obj, "drone_scale",        ds if ds else None)
         setattr(obj, "combined_strike",    self.inputs["combined_strike"].python_value())
-        setattr(obj, "repeated_attack",    self.inputs["repeated_attack"].python_value())
         setattr(obj, "air_defense_active", self.inputs["air_defense_active"].python_value())
         setattr(obj, "shutdown",           self.inputs["shutdown"].python_value())
         setattr(obj, "fire",               self.inputs["fire"].python_value())
@@ -680,18 +606,12 @@ class CandidateForm(QWidget):
             _to_qdate(getattr(p, "attack_date", date.today())))
         self.inputs["area"].set_python_value(
             getattr(p, "area", ""))
-        self.inputs["targets_names"].set_python_value(
-            getattr(p, "targets_names", ""))
         self.inputs["target_type"].set_python_value(
             getattr(p, "target_type", "unknown"))
-        self.inputs["attack_type"].set_python_value(
-            getattr(p, "attack_type", "unknown"))
         self.inputs["combined_strike"].set_python_value(
             getattr(p, "combined_strike", False))
         ds = getattr(p, "drone_scale", "") or ""
         self.inputs["drone_scale"].set_python_value(ds)
-        self.inputs["repeated_attack"].set_python_value(
-            getattr(p, "repeated_attack", None))
         self.inputs["air_defense_active"].set_python_value(
             getattr(p, "air_defense_active", False))
         self.inputs["shutdown"].set_python_value(
@@ -797,6 +717,7 @@ class ReviewMainWindow(QMainWindow):
     def _install_shortcuts(self):
         QShortcut(QKeySequence("S"),      self, self._save_decision)
         QShortcut(QKeySequence("Return"), self, self._save_decision)
+        QShortcut(QKeySequence("D"),      self, self._dup_decision)
         QShortcut(QKeySequence("N"),      self, self._skip_decision)
         QShortcut(QKeySequence("Q"),      self, self._quit_decision)
         QShortcut(QKeySequence("R"),      self, self._reset_form)
@@ -959,6 +880,13 @@ class ReviewMainWindow(QMainWindow):
         self.save_btn.setMinimumWidth(160)
         self.save_btn.clicked.connect(self._save_decision)
 
+        self.dup_btn = QPushButton("⊕   Insert + Duplicate   [D]")
+        self.dup_btn.setObjectName("DupBtn")
+        self.dup_btn.setFixedHeight(46)
+        self.dup_btn.setMinimumWidth(220)
+        self.dup_btn.clicked.connect(self._dup_decision)
+        self.dup_btn.setCursor(Qt.PointingHandCursor)
+
         self.skip_btn = QPushButton("→   Skip   [N]")
         self.skip_btn.setObjectName("SkipBtn")
         self.skip_btn.setFixedHeight(46)
@@ -972,6 +900,7 @@ class ReviewMainWindow(QMainWindow):
         self.quit_btn.clicked.connect(self._quit_decision)
 
         bar.addWidget(self.save_btn)
+        bar.addWidget(self.dup_btn)
         bar.addWidget(self.skip_btn)
         bar.addWidget(self.quit_btn)
         outer.addWidget(action_card)
@@ -992,7 +921,7 @@ class ReviewMainWindow(QMainWindow):
     # ── View helpers ───────────────────────────────────────────────────────────
 
     def _set_review_enabled(self, enabled: bool):
-        for btn in (self.save_btn, self.skip_btn, self.reset_btn):
+        for btn in (self.save_btn, self.dup_btn, self.skip_btn, self.reset_btn):
             btn.setEnabled(enabled)
         self.form.setEnabled(enabled)
 
@@ -1064,7 +993,7 @@ class ReviewMainWindow(QMainWindow):
         self.tile_counter.set_value(f"#{counter}" if counter else "—")
         self.tile_date.set_value(str(getattr(parsed, "attack_date", "")))
         self.tile_area.set_value(str(getattr(parsed, "area", "")))
-        self.tile_targets.set_value(str(getattr(parsed, "targets_names", "")))
+        self.tile_targets.set_value(str(getattr(parsed, "target_type", "")))
         self.tile_score.set_value(str(self._score(parsed)))
         self.tile_damage.set_value(str(getattr(parsed, "damage_level", "")))
         self.tile_action.set_accent(P_GREEN if action == "INSERT" else P_AMBER)
@@ -1090,15 +1019,18 @@ class ReviewMainWindow(QMainWindow):
         self.form.load_parsed(parsed)
         self.save_btn.setText(
             "✔   Save   [S]" if action == "INSERT" else "✔   Update   [S]")
+        self.dup_btn.setVisible(action == "INSERT")
         self._set_review_enabled(True)
         self.save_btn.setFocus()
         self.set_status(
             f"#{counter}  ·  {action}  ·  "
-            f"S = save  ·  N = skip  ·  R = reset  ·  Q = quit")
+            + ("S = save  ·  D = insert+dup  ·  N = skip  ·  R = reset  ·  Q = quit"
+               if action == "INSERT"
+               else "S = save  ·  N = skip  ·  R = reset  ·  Q = quit"))
         self.append_log(
             f"[{action}] #{counter}  "
-            f"{getattr(parsed, 'targets_names', '')}")
-
+            f"{getattr(parsed, 'target_type', '')}")
+        self.dup_btn.setEnabled(action == "INSERT")
     # ── Decision callbacks ─────────────────────────────────────────────────────
 
     def _resolve_decision(self, code: str, obj=None):
@@ -1126,6 +1058,28 @@ class ReviewMainWindow(QMainWindow):
 
             self.set_status("Saving…")
             self._resolve_decision("y", parsed)
+        except Exception as exc:
+            QMessageBox.critical(self, "Validation error", str(exc))
+
+    def _dup_decision(self):
+        if not self.dup_btn.isEnabled() or not self.dup_btn.isVisible():
+            return
+        try:
+            parsed = self.form.build_parsed_copy()
+
+            if (str(getattr(parsed, "area", "")).strip().lower()
+                    in ("", "unknown area")):
+                reply = QMessageBox.question(
+                    self, "Area not set",
+                    "The area is still 'Unknown Area'.\n\nSave anyway?",
+                    QMessageBox.Yes | QMessageBox.No, QMessageBox.Yes,
+                )
+                if reply != QMessageBox.Yes:
+                    self.set_status("Save cancelled — please fill in the area.")
+                    return
+
+            self.set_status("Inserting (duplicate)…")
+            self._resolve_decision("yd", parsed)
         except Exception as exc:
             QMessageBox.critical(self, "Validation error", str(exc))
 
@@ -1304,6 +1258,22 @@ def _stylesheet() -> str:
     QPushButton#SaveBtn:pressed {{ background: {P_GREEN_D}; }}
     QPushButton#SaveBtn:disabled {{
         background: {P_GREEN_L}; color: #9dd9bc; border: none;
+    }}
+
+    /* ── Insert + Duplicate (amber) ── */
+    QPushButton#DupBtn {{
+        background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+            stop:0 #fbbf24, stop:1 {P_AMBER});
+        color: white; border: none;
+        border-radius: 11px; font-size: 15px; font-weight: 800;
+    }}
+    QPushButton#DupBtn:hover {{
+        background: qlineargradient(x1:0,y1:0,x2:0,y2:1,
+            stop:0 #fcd34d, stop:1 #b45309);
+    }}
+    QPushButton#DupBtn:pressed {{ background: #92400e; }}
+    QPushButton#DupBtn:disabled {{
+        background: {P_AMBER_L}; color: #d4a054; border: none;
     }}
 
     /* ── Skip (indigo outline) ── */

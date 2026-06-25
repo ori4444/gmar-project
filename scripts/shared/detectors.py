@@ -7,56 +7,222 @@ from .text_utils import lower_text, split_sentences
 
 
 REGION_ALIASES = {
+    # South / Krasnodar Krai
     "краснодарск": "Krasnodar",
     "туапсе": "Tuapse",
+    "новороссийск": "Novorossiysk",
+    "гай-кодзор": "Gay-Kodzor",
+    # Volgograd
     "волгоград": "Volgograd",
+    # Ural / Bashkortostan
     "уфа": "Ufa",
     "башкир": "Bashkortostan",
+    # Samara
     "самар": "Samara",
     "сызран": "Syzran",
     "новокуйбышев": "Novokuibyshevsk",
+    # Central Russia
     "рязан": "Ryazan",
     "смоленск": "Smolensk",
     "ярцев": "Yartsevo",
+    "калуж": "Kaluga",
+    # Saratov
     "саратов": "Saratov",
     "энгельс": "Engels",
+    "петровск": "Petrovsk",
+    # Bryansk / Oryol
     "брянск": "Bryansk",
+    "карачев": "Karachev",
+    "орел": "Oryol",
+    "орлов": "Oryol",
+    # Tver / Udomlya
     "тверск": "Tver",
     "удомл": "Udomlya",
+    # Kursk / Belgorod
     "курск": "Kursk",
+    "белгород": "Belgorod",
+    # Astrakhan / Rostov
     "астрахан": "Astrakhan",
     "ростов": "Rostov",
     "новошахтин": "Novoshakhtinsk",
     "чертков": "Chertkovo",
+    # Leningrad / Kirishi
     "ленинградск": "Leningrad Oblast",
     "кириш": "Kirishi",
+    "псков": "Pskov",
+    "мурманск": "Murmansk",
+    "вологда": "Vologda",
+    # Chuvashia
     "чуваш": "Chuvashia",
     "чебоксар": "Cheboksary",
+    # Moscow area
     "серпухов": "Serpukhov",
     "московск": "Moscow Oblast",
+    "алексин": "Aleksin",
+    "узлов": "Uzlovaya",
+    "тула": "Tula",
+    # Tambov / Lipetsk / Voronezh
     "тамбов": "Tambov",
-    "петровск": "Petrovsk",
-    "гай-кодзор": "Gay-Kodzor",
-    "карачев": "Karachev",
+    "липецк": "Lipetsk",
     "воронеж": "Voronezh",
     "лиски": "Liski",
-    "липецк": "Lipetsk",
-    "узлов": "Uzlovaya",
-    "новороссийск": "Novorossiysk",
-    "орлов": "Oryol",
+    # Tatarstan / Kazan
     "казан": "Kazan",
+    "татарстан": "Tatarstan",
     "альметьевск": "Almetyevsk",
-    "алексин": "Aleksin",
-    "тула": "Tula",
     "набережн": "Naberezhnye Chelny",
     "нижнекамск": "Nizhnekamsk",
+    # Perm
     "пермск": "Perm",
     "перм": "Perm",
-    "ижевск": "Izhevsk",
+    # Udmurtia (capital: Izhevsk)
+    "удмуртская республика": "Udmurtia",
+    "удмурт": "Udmurtia",
+    "ижевск": "Udmurtia",
+    "сарапул": "Udmurtia",
+    "глазов": "Udmurtia",
+    # Orenburg / Penza / Ulyanovsk
     "оренбург": "Orenburg",
     "пенз": "Penza",
     "ульяновск": "Ulyanovsk",
+    # Nizhny Novgorod (must come after нижнекамск)
+    "нижний новгород": "Nizhny Novgorod",
     "нижн": "Nizhny Novgorod",
+    # Yaroslavl
+    "ярославл": "Yaroslavl",
+    # Kemerovo / Kuzbass
+    "кемеровская область": "Kemerovo",
+    "кемеровск": "Kemerovo",
+    "новокузнецк": "Kemerovo",
+    "кузбасс": "Kemerovo",
+    "кемеров": "Kemerovo",
+    # Sverdlovsk / Ekaterinburg
+    "свердловск": "Sverdlovsk Oblast",
+    "екатеринбург": "Sverdlovsk Oblast",
+    # Tyumen
+    "тюмен": "Tyumen Oblast",
+    # Vladimir
+    "владимирск": "Vladimir Oblast",
+    # Sakhalin
+    "сахалин": "Sakhalin Oblast",
+    # Primorsky Krai / Far East
+    "приморск": "Primorsky Krai",
+    "владивосток": "Primorsky Krai",
+    # Zabaykalsky
+    "забайкальск": "Zabaykalsky Krai",
+    "чита": "Zabaykalsky Krai",
+    # Chelyabinsk
+    "челябинск": "Chelyabinsk",
+    # Khanty-Mansi
+    "ханты-мансийск": "Khanty-Mansi Autonomous Okrug",
+    "хмао": "Khanty-Mansi Autonomous Okrug",
+    "югра": "Khanty-Mansi Autonomous Okrug",
+    "сургут": "Khanty-Mansi Autonomous Okrug",
+    "нижневартовск": "Khanty-Mansi Autonomous Okrug",
+    # Crimea / Occupied Territories
+    "крым": "Crimea",
+    "симферопол": "Crimea",
+    "севастопол": "Crimea",
+    "запорожская область": "Zaporizhzhia Oblast",
+    "запорожь": "Zaporizhzhia Oblast",
+    "запорожск": "Zaporizhzhia Oblast",
+    "мелитопол": "Zaporizhzhia Oblast",
+    "энергодар": "Zaporizhzhia Oblast",
+    "луганск": "Luhansk Oblast",
+    "лнр": "Luhansk Oblast",
+    "херсон": "Occupied Kherson",
+    "донецк": "Occupied Donetsk",
+    "днр": "Occupied Donetsk",
+}
+
+MACRO_REGIONS: dict[str, str] = {
+    # Volga Region
+    "Tatarstan":          "Volga Region",
+    "Kazan":              "Volga Region",
+    "Almetyevsk":         "Volga Region",
+    "Naberezhnye Chelny": "Volga Region",
+    "Nizhnekamsk":        "Volga Region",
+    "Bashkortostan":      "Volga Region",
+    "Ufa":                "Volga Region",
+    "Udmurtia":           "Volga Region",
+    "Izhevsk":            "Volga Region",
+    "Chuvashia":          "Volga Region",
+    "Cheboksary":         "Volga Region",
+    "Nizhny Novgorod":    "Volga Region",
+    "Samara":             "Volga Region",
+    "Syzran":             "Volga Region",
+    "Novokuibyshevsk":    "Volga Region",
+    "Saratov":            "Volga Region",
+    "Engels":             "Volga Region",
+    "Petrovsk":           "Volga Region",
+    "Penza":              "Volga Region",
+    "Ulyanovsk":          "Volga Region",
+    "Orenburg":           "Volga Region",
+    "Perm":               "Volga Region",
+    # Siberia
+    "Kemerovo":           "Siberia",
+    # Central Russia
+    "Moscow Oblast":      "Central Russia",
+    "Tula":               "Central Russia",
+    "Aleksin":            "Central Russia",
+    "Uzlovaya":           "Central Russia",
+    "Serpukhov":          "Central Russia",
+    "Ryazan":             "Central Russia",
+    "Kaluga":             "Central Russia",
+    "Tambov":             "Central Russia",
+    "Lipetsk":            "Central Russia",
+    "Voronezh":           "Central Russia",
+    "Liski":              "Central Russia",
+    "Yaroslavl":          "Central Russia",
+    "Tver":               "Central Russia",
+    "Udomlya":            "Central Russia",
+    "Oryol":              "Central Russia",
+    # Border / Western Russia
+    "Bryansk":            "Border / Western Russia",
+    "Karachev":           "Border / Western Russia",
+    "Smolensk":           "Border / Western Russia",
+    "Yartsevo":           "Border / Western Russia",
+    "Kursk":              "Border / Western Russia",
+    "Belgorod":           "Border / Western Russia",
+    # Southern Russia
+    "Krasnodar":          "Southern Russia",
+    "Tuapse":             "Southern Russia",
+    "Novorossiysk":       "Southern Russia",
+    "Gay-Kodzor":         "Southern Russia",
+    "Rostov":             "Southern Russia",
+    "Novoshakhtinsk":     "Southern Russia",
+    "Chertkovo":          "Southern Russia",
+    "Astrakhan":          "Southern Russia",
+    "Volgograd":          "Southern Russia",
+    # Northwest Russia
+    "Leningrad Oblast":   "Northwest Russia",
+    "Kirishi":            "Northwest Russia",
+    "Pskov":              "Northwest Russia",
+    "Murmansk":           "Northwest Russia",
+    "Vologda":            "Northwest Russia",
+    # Ural
+    "Sverdlovsk Oblast":             "Ural",
+    "Tyumen Oblast":                 "Ural",
+    "Chelyabinsk":                   "Ural",
+    "Khanty-Mansi Autonomous Okrug": "Ural",
+    "Surgut":                        "Ural",
+    "Nizhnevartovsk":                "Ural",
+    # Central Russia (added full names)
+    "Vladimir Oblast":    "Central Russia",
+    "Vladimir":           "Central Russia",
+    # Far East
+    "Sakhalin Oblast":    "Far East Russia",
+    "Primorsky Krai":     "Far East Russia",
+    "Vladivostok":        "Far East Russia",
+    "Zabaykalsky Krai":   "Far East Russia",
+    "Chita":              "Far East Russia",
+    # Occupied Territories
+    "Crimea":             "Occupied Territories",
+    "Occupied Crimea":    "Occupied Territories",
+    "Zaporizhzhia Oblast":"Occupied Territories",
+    "Luhansk Oblast":     "Occupied Territories",
+    "Occupied Kherson":   "Occupied Territories",
+    "Occupied Donetsk":   "Occupied Territories",
 }
 
 NON_RUSSIA_HINTS = [
@@ -74,34 +240,52 @@ NON_RUSSIA_HINTS = [
 ]
 
 FACILITY_TYPES = [
+    # Oil depot / fuel storage (most important — check first)
     (r"нефтебаз\w*", "oil_depot"),
     (r"нефтехранилищ\w*", "oil_depot"),
+    (r"нефтяной\s+(?:терминал|склад|база)", "oil_depot"),
+    (r"нефтепродукт\w*\s+(?:хранилищ|баз|склад|терминал)", "oil_depot"),
+    (r"топлив\w*\s+(?:резервуар|хранилищ|баз|склад|склад)", "oil_depot"),
+    (r"(?:резервуар|хранилищ)\w*\s+(?:с\s+)?(?:топлив|бензин|нефт|мазут|дизельн)", "oil_depot"),
+    (r"резервуар\w*\s+с\s+(?:бензин|топлив|нефт|мазут)", "oil_depot"),
+    (r"склад\w*\s+(?:топлив|нефт|бензин|мазут|гсм)", "oil_depot"),
+    (r"наливн\w*\s+(?:пункт|станц|терминал|база)", "oil_depot"),
+    (r"\bгсм\b", "oil_depot"),  # горюче-смазочные материалы (fuels & lubricants)
+    (r"\bмазут\w*\b", "oil_depot"),  # fuel oil / mazut
+    (r"цистерн\w*\s+с\s+(?:топлив|газ|бензин|нефт|мазут)", "oil_depot"),
+    (r"бензохранилищ\w*", "oil_depot"),
+    (r"бензобаз\w*", "oil_depot"),
+    (r"нефтеналивн\w*", "oil_depot"),
+    # Refinery
     (r"\bнпз\b", "refinery"),
     (r"нефтеперерабатыва\w*", "refinery"),
     (r"нефтекомплекс\w*", "refinery"),
+    (r"нефтезавод\w*", "refinery"),
+    # Pipeline
     (r"нефтепровод\w*", "pipeline"),
+    (r"нефтеперекачива\w*\s+станц\w*", "pipeline"),
+    (r"\bнпс\b", "pipeline"),
+    (r"транснефт", "pipeline"),
+    # Gas facility
     (r"газопровод\w*", "gas_facility"),
     (r"магистральн\w*\s+газопровод\w*", "gas_facility"),
     (r"газоперерабатыва\w*\s+завод\w*", "gas_facility"),
     (r"компрессорн\w*\s+станц\w*", "gas_facility"),
-    (r"нефтеперекачива\w*\s+станц\w*", "pipeline"),
-    (r"\bнпс\b", "pipeline"),
+    (r"баз\w*\s+сжиженн\w*\s+газ", "gas_facility"),
+    (r"сжиженн\w*\s+(?:газ|углеводород)", "gas_facility"),
+    (r"газ\w*\s+хранилищ\w*", "gas_facility"),
+    # Power facility
     (r"подстанц\w*", "power_facility"),
     (r"энергообъект\w*", "power_facility"),
     (r"\bлэп\b", "power_facility"),
     (r"высоковольтн\w*\s+лини\w*", "power_facility"),
     (r"электростанц\w*", "power_facility"),
     (r"\bтэц\b", "power_facility"),
-    (r"\bаэс\b", "power_facility"),
-    (r"резервуар\w*\s+с\s+бензин", "oil_depot"),
-    (r"резервуар\w*\s+с\s+топлив", "oil_depot"),
-    (r"резервуар\w*\s+с\s+нефт", "oil_depot"),
-    # LPG / gas terminal vocabulary
-    (r"баз\w*\s+сжиженн\w*\s+газ", "gas_facility"),
-    (r"сжиженн\w*\s+(?:газ|углеводород)", "gas_facility"),
-    (r"цистерн\w*\s+с\s+(?:топлив|газ|бензин|нефт)", "oil_depot"),
-    # Transneft pipeline facilities
-    (r"транснефт", "pipeline"),
+    # Nuclear
+    (r"\bаэс\b", "nuclear"),
+    (r"атомн\w*\s+электростанц", "nuclear"),
+    (r"ядерн\w*\s+(?:электростанц|станц|реактор|объект)", "nuclear"),
+    (r"реактор\w*\s+(?:энергоблок|блок|установк)", "nuclear"),
 ]
 
 CANONICAL_TARGETS = [
@@ -382,6 +566,11 @@ DIRECT_HIT_PATTERNS = [
     r"начался\s+пожар",
     r"загорел\w*",
     r"возник\w*\s+пожар",
+    r"нанесен\w*\s+ущерб",
+    r"причинен\w*\s+ущерб",
+    r"\bущерб\b",
+    r"нарушена\s+работ",
+    r"наруш\w*\s+(?:производственн|работ|функционирован)",
 ]
 
 FOLLOWUP_ONLY_PATTERNS = [
@@ -412,10 +601,22 @@ def _has_any(text: str, patterns: list[str]) -> bool:
 
 def extract_area(text: str) -> Optional[str]:
     t = lower_text(text)
-    for key, value in REGION_ALIASES.items():
+    # Check longer/more-specific keys first to avoid early false matches
+    for key in sorted(REGION_ALIASES.keys(), key=len, reverse=True):
         if key in t:
-            return value
+            return REGION_ALIASES[key]
     return None
+
+
+def get_macro_region(region: Optional[str]) -> Optional[str]:
+    if not region:
+        return None
+    return MACRO_REGIONS.get(region)
+
+
+def extract_macro_region(text: str) -> Optional[str]:
+    """Specific area → macro region; returns None if area not in hierarchy."""
+    return get_macro_region(extract_area(text))
 
 
 def is_russia_related(text: str) -> bool:
@@ -464,31 +665,22 @@ def extract_all_targets(text: str) -> list[tuple[str, str]]:
         "pipeline": "Pipeline",
         "gas_facility": "Gas Facility",
         "power_facility": "Power Facility",
-    }[target_type]
+        "nuclear": "Nuclear Facility",
+    }.get(target_type, "Unknown Facility")
 
     area = extract_area(t)
     label = f"Unknown {pretty_type} ({area})" if area else f"Unknown {pretty_type}"
     return [(label, target_type)]
 
 
-def normalize_targets_string(targets: list[tuple[str, str]]) -> str:
-    names = [t[0] for t in targets]
-    deduped = []
-    seen = set()
-    for n in names:
-        if n not in seen:
-            deduped.append(n)
-            seen.add(n)
-    return " | ".join(deduped)
-
-
 def merge_target_types(targets: list[tuple[str, str]]) -> str:
-    kinds = sorted(set(t[1] for t in targets))
-    if not kinds:
-        return "unknown"
-    if len(kinds) == 1:
-        return kinds[0]
-    return "mixed"
+    kinds = [t[1] for t in targets]
+    seen, ordered = set(), []
+    for k in kinds:
+        if k and k not in seen:
+            ordered.append(k)
+            seen.add(k)
+    return " | ".join(ordered) if ordered else "unknown"
 
 
 def detect_primary_attack(text: str) -> bool:
@@ -547,6 +739,27 @@ def detect_attack_type(text: str) -> str:
     return "unknown"
 
 
+HEARSAY_PATTERNS = [
+    r"предположительно",
+    r"якобы",
+    r"по\s+данным\s+(?:местн|очевидц|жителей|телеграм|канал)",
+    r"очевидцы\s+сообща",
+    r"по\s+словам\s+очевидцев",
+    r"местные\s+жители\s+сообща",
+    r"сообщают\s+местные",
+    r"по\s+информации\s+(?:местных|канал|источник)",
+    r"судя\s+по\s+(?:видео|кадрам)",
+    r"как\s+сообщают\s+(?:местные|источники|каналы)",
+    r"по\s+имеющимся\s+данным",
+    r"неподтвержденн\w*",
+    r"непроверенн\w*",
+    r"возможно\s+(?:атак|удар|прилет)",
+    r"по\s+слухам",
+    r"по\s+данным\s+каналов",
+    r"предположительно\s+атак",
+]
+
+
 def detect_report_type(text: str) -> str:
     t = lower_text(text)
     if _has_any(t, CORRECTION_PATTERNS):
@@ -555,7 +768,8 @@ def detect_report_type(text: str) -> str:
         return "indirect_aftermath"
     if any(x in t for x in ["минобороны", "губернатор", "генштаб", "пресс-служб"]):
         return "official_confirmation"
-    return "direct_report"
+    # Default to hearsay — most Telegram channel reports are unverified
+    return "hearsay"
 
 
 def detect_hit_confirmed(text: str) -> bool:
@@ -657,7 +871,12 @@ def is_energy_event_candidate(text: str) -> bool:
         return False
 
     has_attack = detect_primary_attack(t) or detect_attack_context(t)
-    has_damage = detect_fire(t) or detect_explosions(t) > 0 or detect_shutdown(t)
+    has_damage = (
+        detect_fire(t)
+        or detect_explosions(t) > 0
+        or detect_shutdown(t)
+        or detect_hit_confirmed(t)    # "damage inflicted", "destroyed", "damaged"
+    )
 
     if has_attack or has_damage:
         return True
@@ -700,7 +919,7 @@ def infer_numeric_mentions(text: str) -> list[int]:
     return nums
 
 
-def infer_drone_scale(text: str, attack_type: str, update_like: bool) -> Optional[str]:
+def infer_drone_scale(text: str, update_like: bool = False) -> Optional[str]:
     t = lower_text(text)
     nums = infer_numeric_mentions(t)
     best_num = max(nums) if nums else None
@@ -716,7 +935,8 @@ def infer_drone_scale(text: str, attack_type: str, update_like: bool) -> Optiona
     if update_like:
         return None
 
-    if attack_type in ("drone", "combined"):
+    # If message mentions drones at all, assume at least "few"
+    if re.search(r"(?:бпла|беспилотник\w*|дрон\w*)", t):
         return "few"
 
     return None
@@ -796,3 +1016,148 @@ def build_windows(text: str) -> list[str]:
             dedup.append(w)
             seen.add(key)
     return dedup
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Event-level segmentation (one segment per distinct attack event)
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Russian transition phrases that often precede a NEW attack event in the same message
+EVENT_TRANSITION_PATTERNS = [
+    r"\bтакже\b",                          # also
+    r"\bкроме\s+того\b",                   # besides / in addition
+    r"\bпомимо\s+этого\b",                 # apart from this
+    r"\bдополнительно\b",                  # additionally
+    r"\bв\s+дополнение\b",                 # in addition
+    r"\bтакже\s+зафиксирован\w*\b",        # also recorded
+    r"\bтакже\s+сообща\w*\b",              # also reported
+    r"\bсообщается\s+также\b",             # it is also reported
+    r"\bпо\s+данным\b",                    # according to [source]
+    r"\bгенштаб\s+доба\w*\b",             # General Staff added
+    r"\bминобороны\s+сообщи\w*\b",         # Defense Ministry reported
+    r"\bещё\s+одн\w*\b",                   # yet another
+    r"\bнанесён\s+ущерб\b",               # damage was inflicted
+    r"\bнанесен\s+ущерб\b",
+    r"\bвзрывы\s+зафиксирован\w*\b",      # explosions recorded
+]
+
+
+def _sentence_has_event_content(t: str) -> bool:
+    """True if this sentence contains an energy attack signal."""
+    return (
+        bool(extract_all_targets(t))
+        or extract_local_target_type(t) is not None
+        or detect_primary_attack(t)
+        or detect_fire(t)
+        or detect_explosions(t) > 0
+        or detect_shutdown(t)
+    )
+
+
+def split_into_attack_events(text: str) -> list[str]:
+    """
+    Split a Telegram message into atomic attack event segments.
+
+    One message often summarises several separate strikes. We segment by:
+      1. Location (area) change between sentences.
+      2. Explicit Russian transition phrases preceding a new event.
+      3. Sentences that introduce a canonical or local facility target.
+
+    Returns a list of text segments. Each segment is suitable for independent
+    ParsedAttack extraction. Returns [text] (the original) as a fallback when
+    no meaningful split can be found.
+    """
+    sentences = split_sentences(text)
+    if len(sentences) <= 1:
+        return [text]
+
+    # ── Annotate each sentence ────────────────────────────────────────────────
+    annotations = []
+    for sent in sentences:
+        t = lower_text(sent)
+        annotations.append({
+            "sent":            sent,
+            "area":            extract_area(t),
+            "has_target":      bool(extract_all_targets(t)) or extract_local_target_type(t) is not None,
+            "has_attack":      detect_primary_attack(t) or detect_fire(t) or detect_explosions(t) > 0,
+            "is_transition":   _has_any(t, EVENT_TRANSITION_PATTERNS),
+        })
+
+    # ── Group into segments ───────────────────────────────────────────────────
+    # A new segment starts when:
+    #   • a new area is detected AND the sentence contains event content, OR
+    #   • there is an explicit transition AND the sentence has event content
+    segments: list[list[str]] = []
+    current: list[str] = []
+    current_area: Optional[str] = None
+
+    for ann in annotations:
+        area = ann["area"]
+        has_event = ann["has_target"] or ann["has_attack"]
+        area_changed = area is not None and area != current_area and current_area is not None
+
+        starts_new_segment = current and has_event and (
+            area_changed
+            or (ann["is_transition"] and (area_changed or ann["has_target"]))
+        )
+
+        if starts_new_segment:
+            segments.append(list(current))
+            current = []
+
+        if area:
+            current_area = area
+        current.append(ann["sent"])
+
+    if current:
+        segments.append(current)
+
+    # ── Filter: only segments with a real energy event ────────────────────────
+    result: list[str] = []
+    for sents in segments:
+        seg_text = " ".join(sents)
+        t = lower_text(seg_text)
+        has_target = bool(extract_all_targets(t)) or extract_local_target_type(t) is not None
+        has_signal = (
+            detect_primary_attack(t)
+            or detect_fire(t)
+            or detect_explosions(t) > 0
+            or detect_shutdown(t)
+            or detect_air_defense(t)
+            or detect_hit_confirmed(t)    # "damage inflicted", "destroyed", etc.
+        )
+        if has_target and has_signal:
+            result.append(seg_text)
+
+    return result if result else [text]
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Target-type compatibility (used for UPDATE logic)
+# ─────────────────────────────────────────────────────────────────────────────
+
+_OIL_TYPES  = {"oil_depot", "refinery", "pipeline"}
+_GAS_TYPES  = {"gas_facility"}
+_PWR_TYPES  = {"power_facility", "nuclear"}
+_SOFT_TYPES = {"unknown", "other", None, ""}
+
+
+def _split_types(v: Optional[str]) -> set[str]:
+    if not v:
+        return set()
+    return {p.strip() for p in v.split(" | ") if p.strip()}
+
+
+def target_types_compatible(a: Optional[str], b: Optional[str]) -> bool:
+    """
+    Return True if two target-type strings (possibly ' | '-joined multi-values)
+    can belong to the same event record: either side is soft/unknown, or they
+    share at least one concrete type.
+    """
+    if a in _SOFT_TYPES or b in _SOFT_TYPES:
+        return True
+    a_types = _split_types(a)
+    b_types = _split_types(b)
+    if not a_types or not b_types:
+        return True
+    return bool(a_types & b_types)

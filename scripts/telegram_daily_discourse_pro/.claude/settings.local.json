@@ -1,8 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(python -c ':*)",
-      "Bash(python -c \"from ui import CANONICAL_TARGET_AREA, CandidateForm, ReviewMainWindow; print\\(f'{len\\(CANONICAL_TARGET_AREA\\)} targets mapped'\\)\")"
-    ]
-  }
-}

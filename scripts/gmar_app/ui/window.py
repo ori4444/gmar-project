@@ -1,5 +1,5 @@
 """
-Main application window with dark sidebar navigation.
+Main application window with cream sidebar navigation.
 """
 from __future__ import annotations
 
@@ -54,7 +54,7 @@ class SidebarButton(QPushButton):
                 padding: 6px 4px;
             }}
             QPushButton:hover {{
-                background: {P.CARD_BG}; color: {P.TXT};
+                background: {P.INPUT_BG}; color: {P.TXT};
             }}
         """)
 
@@ -76,7 +76,11 @@ class Sidebar(QWidget):
     def __init__(self, sections: list[tuple[str, str, QWidget]], stack: QStackedWidget, parent=None):
         super().__init__(parent)
         self.setFixedWidth(106)
-        self.setStyleSheet(f"background:{P.SIDEBAR_BG};")
+        # Soft right-edge divider = sidebar boundary
+        self.setStyleSheet(
+            f"background:{P.BG}; "
+            f"border-right: 1px solid {P.DIVIDER};"
+        )
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(8, 16, 8, 16)
@@ -89,7 +93,7 @@ class Sidebar(QWidget):
         logo.setFixedHeight(50)
         logo.setStyleSheet(
             f"color:{P.INDIGO}; font-size:28px; font-weight:900; "
-            f"background:{P.BG}; border-radius:12px; margin-bottom:12px;"
+            f"background:transparent; border:none; margin-bottom:12px;"
         )
         lay.addWidget(logo)
 
@@ -120,8 +124,8 @@ class GmarMainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Gmar — Attack Intelligence")
-        self.resize(1280, 820)
-        self.setMinimumSize(1100, 700)
+        self.resize(1440, 860)
+        self.setMinimumSize(1120, 720)
         self.setStyleSheet(f"QMainWindow {{ background:{P.BG}; }}")
 
         self._stack = QStackedWidget()
@@ -132,6 +136,7 @@ class GmarMainWindow(QMainWindow):
         sections = [(icon, label, page_widget), ...]
         Must be called before show().
         """
+        # Outer body — no border, clean cream fill
         body = QWidget()
         body.setStyleSheet(f"background:{P.BG};")
         h = QHBoxLayout(body)
@@ -140,12 +145,6 @@ class GmarMainWindow(QMainWindow):
 
         self._sidebar = Sidebar(sections, self._stack)
         h.addWidget(self._sidebar)
-
-        sep = QWidget()
-        sep.setFixedWidth(1)
-        sep.setStyleSheet(f"background:{P.CARD_BORDER};")
-        h.addWidget(sep)
-
         h.addWidget(self._stack)
         self.setCentralWidget(body)
 
@@ -161,34 +160,60 @@ class GmarMainWindow(QMainWindow):
             }}
             QScrollArea {{ background: transparent; border: none; }}
             QScrollBar:vertical {{
-                background: {P.SIDEBAR_BG}; width: 8px; border-radius: 4px;
+                background: {P.INPUT_BG}; width: 8px; border-radius: 4px;
             }}
             QScrollBar::handle:vertical {{
-                background: {P.CARD_BORDER}; border-radius: 4px; min-height: 30px;
+                background: {P.DIVIDER}; border-radius: 4px; min-height: 30px;
             }}
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{ height: 0; }}
             QPlainTextEdit, QTextEdit {{
                 background:{P.INPUT_BG}; color:{P.TXT};
-                border:2px solid {P.CARD_BORDER}; border-radius:8px;
+                border: 1px solid {P.DIVIDER}; border-radius:8px;
                 font-size:12px;
             }}
-            QCalendarWidget {{ background:{P.CARD_BG}; color:{P.TXT}; }}
+            QCalendarWidget {{ background:{P.BG}; color:{P.TXT}; }}
             QCalendarWidget QAbstractItemView:enabled {{
-                background:{P.CARD_BG}; color:{P.TXT};
+                background:{P.BG}; color:{P.TXT};
                 selection-background-color:{P.INDIGO}; selection-color:#fff;
+                font-size:13px;
+            }}
+            QCalendarWidget QAbstractItemView:disabled {{
+                color:{P.TXT3};
             }}
             QCalendarWidget QWidget#qt_calendar_navigationbar {{
-                background:{P.SIDEBAR_BG};
+                background:{P.INPUT_BG}; min-height:44px;
             }}
-            QMessageBox {{ background:{P.CARD_BG}; color:{P.TXT}; }}
+            QCalendarWidget QToolButton {{
+                color:{P.TXT}; font-size:13px; font-weight:700;
+                background:{P.INPUT_BG}; border:none; border-radius:6px;
+                padding:4px 8px; min-width:32px; min-height:32px;
+            }}
+            QCalendarWidget QToolButton:hover {{
+                background:{P.DIVIDER}; color:#fff;
+            }}
+            QCalendarWidget QMenu {{
+                background:{P.BG}; color:{P.TXT};
+                border: 1px solid {P.DIVIDER}; border-radius:8px;
+            }}
+            QCalendarWidget QSpinBox {{
+                background:{P.INPUT_BG}; color:{P.TXT};
+                border: 1px solid {P.DIVIDER}; border-radius:6px;
+                padding:2px 6px; font-size:13px;
+            }}
+            QCalendarWidget QHeaderView::section {{
+                background:{P.INPUT_BG}; color:{P.TXT2};
+                font-size:12px; font-weight:700; padding:4px;
+                border:none;
+            }}
+            QMessageBox {{ background:{P.BG}; color:{P.TXT}; }}
             QMessageBox QPushButton {{
                 background:{P.INDIGO}; color:#fff;
                 border:none; border-radius:8px;
                 padding:6px 18px; font-weight:700;
             }}
             QToolTip {{
-                background:{P.CARD_BG}; color:{P.TXT};
-                border:1px solid {P.CARD_BORDER};
+                background:{P.BG}; color:{P.TXT};
+                border: 1px solid {P.DIVIDER};
             }}
         """)
 
