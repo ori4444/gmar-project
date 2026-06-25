@@ -35,6 +35,7 @@ from analysis.window_analysis import (
     aggregate_attacks, build_full_daily,
     DISCOURSE_COLS_EXT, CV_SPLITS,
     add_derived_discourse, _compute_rolling_stats, build_features,
+    MAX_POS_RATE, MAX_AUC_STD, MIN_AUC,
 )
 from analysis.multi_target_analysis import (
     _BASE_OUTCOME_TARGETS, build_multi_dataset, load_target_type_daily,
@@ -49,6 +50,10 @@ _RESULTS_CSV = _DATA_DIR / "analysis" / "multi_target_results.csv"
 _BANK_DIR    = _DATA_DIR / "models"
 BANK_PATH    = _BANK_DIR / "attack_forecast_bank.pkl"
 _META_PATH   = _BANK_DIR / "attack_forecast_meta.json"
+
+_LOG_DIR          = _DATA_DIR / "predictions"
+PREDICTIONS_LOG   = _LOG_DIR / "predictions_log.csv"
+MODEL_AUC_LOG     = _LOG_DIR / "model_auc_log.csv"
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  Intelligence constants
@@ -139,7 +144,15 @@ def _load_bank() -> dict | None:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _load_best_params(outcomes: list[dict]) -> dict[str, dict]:
-    """Parse multi_target_results.csv → best (lb, h) per outcome."""
+    """
+    Parse multi_target_results.csv → best (lb, h) per outcome.
+
+    Applies the same quality gates as select_quality_configs in window_analysis:
+      Tier 1: pos_rate ≤ MAX_POS_RATE AND auc_std ≤ MAX_AUC_STD AND auc ≥ MIN_AUC
+      Tier 2: pos_rate ≤ MAX_POS_RATE AND auc ≥ MIN_AUC (relax std gate)
+      Tier 3: auc ≥ MIN_AUC (relax pos_rate gate)
+      Tier 4: any config with n_folds ≥ 2 (last resort)
+    """
     if not _RESULTS_CSV.exists():
         return {}
     df = pd.read_csv(_RESULTS_CSV)
@@ -151,7 +164,31 @@ def _load_best_params(outcomes: list[dict]) -> dict[str, dict]:
             grp = grp[grp["n_folds"] >= 2]
         if grp.empty:
             continue
-        best = grp.loc[grp["auc"].idxmax()]
+
+        has_std = "auc_std" in grp.columns
+
+        # Tier 1: full quality filter
+        good = grp[grp["auc"] >= MIN_AUC]
+        if "pos_rate" in grp.columns:
+            good = good[good["pos_rate"] <= MAX_POS_RATE]
+        if has_std:
+            good = good[good["auc_std"] <= MAX_AUC_STD]
+
+        # Tier 2: relax std gate
+        if good.empty:
+            good = grp[grp["auc"] >= MIN_AUC]
+            if "pos_rate" in grp.columns:
+                good = good[good["pos_rate"] <= MAX_POS_RATE]
+
+        # Tier 3: relax pos_rate gate
+        if good.empty:
+            good = grp[grp["auc"] >= MIN_AUC]
+
+        # Tier 4: last resort — any config
+        if good.empty:
+            good = grp
+
+        best = good.loc[good["auc"].idxmax()]
         result[name] = {
             "lb":      int(best["lookback"]),
             "h":       int(best["horizon"]),
@@ -202,6 +239,80 @@ def _cv_and_train(
         "n_samples":  len(X),
         "outcome":    outcome,
     }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+#  Logging helpers
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _append_csv(path: Path, rows: list[dict]) -> None:
+    """Append rows to a CSV log, writing header only if the file is new."""
+    if not rows:
+        return
+    path.parent.mkdir(parents=True, exist_ok=True)
+    write_header = not path.exists()
+    with open(path, "a", newline="", encoding="utf-8") as f:
+        import csv
+        w = csv.DictWriter(f, fieldnames=list(rows[0].keys()))
+        if write_header:
+            w.writeheader()
+        w.writerows(rows)
+
+
+def _log_predictions(forecast: dict) -> None:
+    """Append one row per signal to predictions_log.csv."""
+    gen_at      = forecast.get("generated_at", "")
+    data_through = forecast.get("data_through", "")
+    precision   = forecast.get("precision_mode", "")
+    warning     = forecast.get("warning_level", "")
+
+    rows: list[dict] = []
+    for band_key in ("near_term", "weekly", "extended"):
+        band = forecast.get(band_key, {})
+        for dim, signals in band.get("signals", {}).items():
+            for s in signals:
+                rows.append({
+                    "generated_at":  gen_at,
+                    "data_through":  data_through,
+                    "precision_mode": precision,
+                    "warning_level": warning,
+                    "band":          band_key,
+                    "dimension":     dim,
+                    "target":        s.get("target", ""),
+                    "label":         s.get("label", ""),
+                    "prob":          round(s.get("prob", float("nan")), 4),
+                    "cv_auc":        round(s.get("cv_auc", float("nan")), 4),
+                    "cv_std":        round(s.get("cv_std", float("nan")), 4),
+                    "best_h":        s.get("best_h", ""),
+                    "best_lb":       s.get("best_lb", ""),
+                    "tier":          s.get("tier") or "",
+                    "passes":        int(s.get("passes", False)),
+                })
+
+    _append_csv(PREDICTIONS_LOG, rows)
+
+
+def _log_model_auc(meta: dict) -> None:
+    """Append one row per trained outcome to model_auc_log.csv."""
+    trained_at  = meta.get("trained_at", "")
+    data_range  = meta.get("data_range", ["", ""])
+    rows: list[dict] = []
+    for name, info in meta.get("outcomes", {}).items():
+        if info.get("status") != "trained":
+            continue
+        rows.append({
+            "trained_at":  trained_at,
+            "data_from":   data_range[0] if data_range else "",
+            "data_to":     data_range[1] if len(data_range) > 1 else "",
+            "target":      name,
+            "lb":          info.get("lb", ""),
+            "h":           info.get("h", ""),
+            "cv_auc":      round(info.get("cv_auc", float("nan")), 4),
+            "cv_std":      round(info.get("cv_std", float("nan")), 4),
+            "n":           info.get("n", ""),
+            "pos_rate":    round(info.get("pos_rate", float("nan")), 4),
+        })
+    _append_csv(MODEL_AUC_LOG, rows)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -287,6 +398,7 @@ def train_bank(conn) -> dict:
         json.dump(meta, f, indent=2)
 
     print(f"\nBank saved → {BANK_PATH}  ({len(bank)} models)")
+    _log_model_auc(meta)
     return meta
 
 
@@ -453,16 +565,23 @@ def predict_intel(conn, precision_mode: str = "medium") -> dict:
 
     meta = get_bank_meta() or {}
 
-    raw_attacks   = load_attacks(conn)
-    disc          = load_discourse(conn)
+    raw_attacks             = load_attacks(conn)
+    disc                    = load_discourse(conn)
+    ttype_daily, ttype_cols = load_target_type_daily(conn)
     attacks_daily = aggregate_attacks(raw_attacks)
     df = build_full_daily(attacks_daily, disc)
     df = add_derived_discourse(df)
 
+    if not ttype_daily.empty and ttype_cols:
+        df = df.merge(ttype_daily, on="date", how="left")
+        df[ttype_cols] = df[ttype_cols].fillna(0).astype(int)
+
     data_through = str(df["date"].iloc[-1].date())
     raw_preds    = _raw_predict_all(bank, df)
 
-    return _build_intel_forecast(raw_preds, precision_mode, meta, data_through)
+    forecast = _build_intel_forecast(raw_preds, precision_mode, meta, data_through)
+    _log_predictions(forecast)
+    return forecast
 
 
 # ─────────────────────────────────────────────────────────────────────────────

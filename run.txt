@@ -1,0 +1,6 @@
+run venv:
+source venv/bin/activate
+
+run main:
+python3 scripts/gmar_app/main.py
+
