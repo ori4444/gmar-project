@@ -3,9 +3,12 @@ Gmar App — unified entry point.
 
 Sections:
   0. Home     — navigation hub
-  1. Attacks  — fetch from Telegram, parse, review & save
-  2. Discourse — run daily feature extractor
-  3. Graphs   — open Plotly timeline in browser
+  1. Help     — plain-language explanation of the app
+  2. Attacks  — fetch from Telegram, parse, review & save
+  3. Discourse — run daily feature extractor
+  4. Graphs   — open Plotly timeline in browser
+  5. Predict  — model training / forecasting
+  6. Story    — plain-language model insights
 
 Usage:
     python gmar_app/main.py
@@ -17,13 +20,12 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from datetime import datetime, timedelta, timezone
 
-from PySide6.QtGui import QFont
 from PySide6.QtWidgets import QApplication
 from qasync import QEventLoop
 
 from shared.config import (
     API_ID, API_HASH, DB_DSN, LOCAL_TZ,
-    PREFETCH_QUEUE_SIZE, REVIEW_MODE,
+    PREFETCH_QUEUE_SIZE,
 )
 from shared.telegram_client import build_client, iter_messages
 from shared.text_utils import clean_text
@@ -38,11 +40,12 @@ from gmar_app.db import (
 )
 from gmar_app.ui.window import get_app, get_main_window, GmarMainWindow
 from gmar_app.ui.home import HomePage
+from gmar_app.ui.help import HelpPage
 from gmar_app.ui.attacks import AttacksPage
 from gmar_app.ui.discourse import DiscoursePage
 from gmar_app.ui.graphs import GraphsPage
 from gmar_app.ui.predictions import PredictionsPage
-from gmar_app.ui.multi_target import MultiTargetPage
+from gmar_app.ui.story import StoryPage
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -64,8 +67,8 @@ def validate_config():
 # ─────────────────────────────────────────────────────────────────────────────
 
 async def producer(queue, client, start_dt_utc, end_dt_utc_exclusive, page: AttacksPage):
-    page.set_status("Fetching messages from Telegram…")
-    page.append_log("Starting iteration over Telegram history")
+    page.set_status("שולפים הודעות מטלגרם…")
+    page.append_log("מתחילים לעבור על היסטוריית טלגרם")
 
     async for msg in iter_messages(client, start_dt_utc, end_dt_utc_exclusive):
         try:
@@ -76,10 +79,10 @@ async def producer(queue, client, start_dt_utc, end_dt_utc_exclusive, page: Atta
 
             preliminary = build_parsed_fields(msg.date, text, existing_event_found=False)
             if not preliminary:
-                page.append_log(f"Message {msg_id}: no candidates")
+                page.append_log(f"הודעה {msg_id}: אין מועמדים")
                 continue
 
-            page.append_log(f"Message {msg_id}: {len(preliminary)} candidate(s) — translating")
+            page.append_log(f"הודעה {msg_id}: {len(preliminary)} מועמד/ים — מתרגמים")
             translated, english = await asyncio.gather(
                 asyncio.to_thread(translate_to_hebrew, text),
                 asyncio.to_thread(translate_to_english, text),
@@ -87,11 +90,11 @@ async def producer(queue, client, start_dt_utc, end_dt_utc_exclusive, page: Atta
             await queue.put((msg, text, english, translated, preliminary))
 
         except Exception as exc:
-            page.append_log(f"Message {getattr(msg, 'id', '?')}: error — {exc}")
+            page.append_log(f"הודעה {getattr(msg, 'id', '?')}: שגיאה — {exc}")
             continue
 
-    page.set_status("All messages fetched")
-    page.append_log("Producer finished")
+    page.set_status("כל ההודעות נשלפו")
+    page.append_log("שליפת ההודעות הסתיימה")
     await queue.put(None)
 
 
@@ -106,8 +109,8 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
     start_dt_utc = start_local.astimezone(timezone.utc)
     end_dt_utc_exclusive = end_local_exclusive.astimezone(timezone.utc)
 
-    page.set_status("Connecting to Telegram…")
-    page.append_log(f"Session: {start_date} → {end_date}  |  mode={mode}")
+    page.set_status("מתחברים לטלגרם…")
+    page.append_log(f"טווח: {start_date} → {end_date}  |  מצב={mode}")
 
     client = None
     conn = None
@@ -116,13 +119,13 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
     try:
         client = build_client()
         await client.start()
-        page.append_log("Telegram connected")
+        page.append_log("טלגרם מחובר")
 
-        page.set_status("Connecting to database…")
+        page.set_status("מתחברים למסד הנתונים…")
         conn = get_conn()
         ensure_schema(conn)
         page.set_fetch_recent_callback(lambda limit=5: fetch_recent_attacks(conn, limit))
-        page.append_log("Database ready — starting review")
+        page.append_log("מסד הנתונים מוכן — מתחילים בדיקה")
 
         queue = asyncio.Queue(maxsize=PREFETCH_QUEUE_SIZE)
         producer_task = asyncio.create_task(
@@ -153,11 +156,7 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
                             merged = build_updated_record(existing, parsed.to_db_dict(text))
                             diffs  = diff_update_fields(existing, merged)
                             if not diffs:
-                                page.append_log(f"Message {msg_id}: no changes — skipping")
-                                continue
-                            if mode == "blind":
-                                update_attack(conn, merged, diffs)
-                                page.append_log(f"Message {msg_id}: updated (auto)")
+                                page.append_log(f"הודעה {msg_id}: אין שינויים — מדלגים")
                                 continue
                             history.append({
                                 "msg_id": msg_id, "text": text,
@@ -167,10 +166,6 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
                                 "record_id": None, "last_edited": None,
                             })
                         else:
-                            if mode == "blind":
-                                insert_attack(conn, parsed.to_db_dict(text))
-                                page.append_log(f"Message {msg_id}: inserted (auto)")
-                                continue
                             history.append({
                                 "msg_id": msg_id, "text": text,
                                 "english": english, "translated": translated,
@@ -179,7 +174,7 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
                                 "record_id": None, "last_edited": None,
                             })
                     except Exception as exc:
-                        page.append_log(f"Message {msg_id}: error — {exc}")
+                        page.append_log(f"הודעה {msg_id}: שגיאה — {exc}")
 
         cursor = -1
 
@@ -188,8 +183,8 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
             await _fill_to(target)
 
             if target >= len(history):
-                page.set_status(f"Done — {len(history)} candidate(s) reviewed")
-                page.append_log(f"Review complete: {len(history)} candidate(s)")
+                page.set_status(f"סיימנו — נבדקו {len(history)} מועמד/ים")
+                page.append_log(f"הבדיקה הושלמה: {len(history)} מועמד/ים")
                 break
 
             cursor = target
@@ -228,13 +223,13 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
                 continue
 
             if action_code == "q":
-                page.append_log("User exited")
+                page.append_log("המשתמש יצא")
                 if producer_task and not producer_task.done():
                     producer_task.cancel()
                 return
 
             if action_code == "n":
-                page.append_log(f"Skipped #{cursor + 1}")
+                page.append_log(f"דולג #{cursor + 1}")
                 continue
 
             if action_code == "y":
@@ -246,23 +241,23 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
                             diffs2 = diff_update_fields(fresh, merged)
                             if diffs2:
                                 update_attack(conn, merged, diffs2)
-                                page.append_log(f"#{cursor + 1}: updated")
+                                page.append_log(f"#{cursor + 1}: עודכן")
                             else:
-                                page.append_log(f"#{cursor + 1}: no changes")
+                                page.append_log(f"#{cursor + 1}: אין שינויים")
                     elif display_action == "UPDATE":
                         merged = build_updated_record(display_existing, edited_parsed.to_db_dict(c["text"]))
                         diffs2 = diff_update_fields(display_existing, merged)
                         if diffs2:
                             update_attack(conn, merged, diffs2)
-                            page.append_log(f"UPDATE #{cursor + 1}: saved")
+                            page.append_log(f"עדכון #{cursor + 1}: נשמר")
                         else:
-                            page.append_log(f"UPDATE #{cursor + 1}: no changes")
+                            page.append_log(f"עדכון #{cursor + 1}: אין שינויים")
                     else:
                         record_id = insert_attack(conn, edited_parsed.to_db_dict(c["text"]))
                         c["record_id"] = record_id
-                        page.append_log(f"INSERT #{cursor + 1}: saved")
+                        page.append_log(f"הוספה #{cursor + 1}: נשמר")
                 except Exception as db_exc:
-                    page.append_log(f"#{cursor + 1}: DB error — {db_exc}")
+                    page.append_log(f"#{cursor + 1}: שגיאת מסד נתונים — {db_exc}")
 
             elif action_code == "mu":
                 existing_manual = page.get_manual_update_target()
@@ -271,19 +266,19 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
                         merged = build_updated_record(existing_manual, edited_parsed.to_db_dict(c["text"]))
                         diffs2 = diff_update_fields(existing_manual, merged)
                         if not diffs2:
-                            page.append_log(f"Manual update #{cursor + 1}: no changes")
+                            page.append_log(f"עדכון ידני #{cursor + 1}: אין שינויים")
                         else:
                             update_attack(conn, merged, diffs2)
                             page.append_log(
-                                f"Manual update #{cursor + 1}: saved (id={existing_manual['attack_id']})"
+                                f"עדכון ידני #{cursor + 1}: נשמר (מזהה={existing_manual['attack_id']})"
                             )
                     except Exception as db_exc:
-                        page.append_log(f"Manual update #{cursor + 1}: DB error — {db_exc}")
+                        page.append_log(f"עדכון ידני #{cursor + 1}: שגיאת מסד נתונים — {db_exc}")
                 page.reset_to_insert()
 
     except Exception as exc:
-        page.set_status("Error — see log")
-        page.append_log(f"Critical error: {type(exc).__name__}: {exc}")
+        page.set_status("שגיאה — ראו יומן")
+        page.append_log(f"שגיאה קריטית: {type(exc).__name__}: {exc}")
 
     finally:
         page.set_fetch_recent_callback(None)
@@ -297,10 +292,10 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
         if client is not None:
             try:
                 await client.disconnect()
-                page.append_log("Disconnected")
+                page.append_log("החיבור נותק")
             except Exception:
                 pass
-        page.set_status("Stopped")
+        page.set_status("נעצר")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -309,24 +304,25 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
 
 if __name__ == "__main__":
     app = get_app()
-    app.setFont(QFont("Segoe UI", 11))
 
     # ── Build pages ──────────────────────────────────────────────────────────
     home_page         = HomePage()
+    help_page         = HelpPage()
     attacks_page      = AttacksPage()
     discourse_page    = DiscoursePage()
     graphs_page       = GraphsPage()
-    multi_target_page = MultiTargetPage()
     predictions_page  = PredictionsPage()
+    story_page        = StoryPage()
 
     win = get_main_window()
     win.set_pages([
-        ("🏠", "Home",      home_page),
-        ("⚡", "Attacks",   attacks_page),
-        ("📡", "Discourse", discourse_page),
-        ("📊", "Graphs",    graphs_page),
-        ("🎯", "Multi",     multi_target_page),
-        ("🤖", "Predict",   predictions_page),
+        ("🏠", "בית",     home_page),
+        ("💡", "עזרה",    help_page),
+        ("⚡", "תקיפות",  attacks_page),
+        ("📡", "שיח",     discourse_page),
+        ("📊", "גרפים",   graphs_page),
+        ("🤖", "תחזיות",  predictions_page),
+        ("✨", "תובנות",  story_page),
     ])
     win.apply_dark_stylesheet()
     win.show()
@@ -334,13 +330,12 @@ if __name__ == "__main__":
 
     # Connect home page navigation
     def _navigate_to_attacks():
-        win.switch_to(1)
+        win.switch_to(2)
 
     home_page.set_nav(
         attacks=_navigate_to_attacks,
-        discourse=lambda: win.switch_to(2),
-        graphs=lambda: win.switch_to(3),
-        multi_target=lambda: win.switch_to(4),
+        discourse=lambda: win.switch_to(3),
+        graphs=lambda: win.switch_to(4),
         predictions=lambda: win.switch_to(5),
     )
 
@@ -358,7 +353,7 @@ if __name__ == "__main__":
             if params is None:
                 break
             mode, start_date, end_date = params
-            win.switch_to(1)   # ensure Attacks tab is visible
+            win.switch_to(2)   # ensure Attacks tab is visible
             try:
                 await run_attacks(mode, start_date, end_date, attacks_page)
             except Exception:

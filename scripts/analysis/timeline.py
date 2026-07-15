@@ -27,9 +27,9 @@ import plotly.graph_objects as go
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from shared.config import (
     DB_DSN,
-    EVENTS_TABLE, TARGETS_TABLE, ET_TABLE, FEATURES_TABLE,
-    CHANNEL_USERNAME,
+    EVENTS_TABLE, TARGETS_TABLE, ET_TABLE,
 )
+from analysis.window_analysis import load_discourse
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -62,26 +62,26 @@ T_WAR_UKR       = "Ukrainian Strikes on Russia"
 # ─────────────────────────────────────────────────────────────────────────────
 
 C = dict(
-    attack_bar   = "#4f46e5",
+    attack_bar   = "#5E6AD2",
     rolling      = "#a5b4fc",
     fire         = "#ef4444",
     hit          = "#10b981",
-    shutdown     = "#f97316",
+    shutdown     = "#fb923c",
     airdef       = "#f59e0b",
-    combined     = "#7c3aed",
+    combined     = "#a78bfa",
     # discourse
-    pre_drone    = "#0ea5e9",
+    pre_drone    = "#38bdf8",
     pre_airdef   = "#8b5cf6",
     pre_airport  = "#fbbf24",
     pre_uncert   = "#94a3b8",
-    en_attack    = "#059669",
+    en_attack    = "#34d399",
     en_confirm   = "#6ee7b7",
-    en_refinery  = "#065f46",
-    war_total    = "#64748b",
-    war_ukr      = "#334155",
+    en_refinery  = "#10b981",
+    war_total    = "#94a3b8",
+    war_ukr      = "#cbd5e1",
     # background bands
-    band_any     = "rgba(79,70,229,0.05)",
-    band_intense = "rgba(239,68,68,0.10)",
+    band_any     = "rgba(94,106,210,0.08)",
+    band_intense = "rgba(239,68,68,0.16)",
 )
 
 
@@ -120,26 +120,6 @@ def load_attacks(conn) -> pd.DataFrame:
     """
     df = pd.read_sql(sql, conn, parse_dates=["attack_date"])
     return df
-
-
-def load_discourse(conn) -> pd.DataFrame:
-    sql = f"""
-        SELECT
-            feature_date,
-            COALESCE(pre_drone,   0) AS pre_drone,
-            COALESCE(pre_airdef,  0) AS pre_airdef,
-            COALESCE(pre_airport, 0) AS pre_airport,
-            COALESCE(pre_uncert,  0) AS pre_uncert,
-            COALESCE(en_attack,   0) AS en_attack,
-            COALESCE(en_confirm,  0) AS en_confirm,
-            COALESCE(en_refinery, 0) AS en_refinery,
-            COALESCE(war_total,   0) AS war_total,
-            COALESCE(war_ukr_ru,  0) AS war_ukr_ru
-        FROM {FEATURES_TABLE}
-        WHERE channel = '{CHANNEL_USERNAME}'
-        ORDER BY feature_date
-    """
-    return pd.read_sql(sql, conn, parse_dates=["feature_date"])
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -220,7 +200,7 @@ def build_figure(daily: pd.DataFrame, disc: pd.DataFrame) -> go.Figure:
     # Colour each bar by avg damage
     bar_colors = (
         daily["avg_damage"].apply(
-            lambda v: "#16a34a" if v < 1.5 else "#d97706" if v < 2.5 else "#dc2626"
+            lambda v: "#22c55e" if v < 1.5 else "#f59e0b" if v < 2.5 else "#ef4444"
         )
         if not daily.empty else []
     )
@@ -306,13 +286,13 @@ def build_figure(daily: pd.DataFrame, disc: pd.DataFrame) -> go.Figure:
 
     fig.update_layout(
         autosize=True,
-        paper_bgcolor="#f8fafc",
-        plot_bgcolor="#ffffff",
-        font=dict(family="'Inter','Segoe UI',sans-serif", size=12, color="#334155"),
+        paper_bgcolor="#0a0b0d",
+        plot_bgcolor="#0a0b0d",
+        font=dict(family="'Inter','Segoe UI',sans-serif", size=12, color="#9297a3"),
 
         title=dict(
             text="<b>Attack Timeline & Discourse Signals</b>",
-            font=dict(size=18, color="#0f172a"),
+            font=dict(size=18, color="#eef0f3"),
             x=0.01,
         ),
 
@@ -321,7 +301,7 @@ def build_figure(daily: pd.DataFrame, disc: pd.DataFrame) -> go.Figure:
             title="Attacks / Events",
             side="left",
             showgrid=True,
-            gridcolor="#e2e8f0",
+            gridcolor="rgba(255,255,255,0.07)",
             gridwidth=1,
             zeroline=False,
             tickfont=dict(size=11),
@@ -334,14 +314,14 @@ def build_figure(daily: pd.DataFrame, disc: pd.DataFrame) -> go.Figure:
             overlaying="y",
             showgrid=False,
             zeroline=False,
-            tickfont=dict(size=11, color="#94a3b8"),
-            title_font=dict(color="#94a3b8"),
+            tickfont=dict(size=11, color="#5b606c"),
+            title_font=dict(color="#5b606c"),
         ),
 
         xaxis=dict(
             showgrid=True,
-            gridcolor="#e2e8f0",
-            rangeslider=dict(visible=True, thickness=0.05),
+            gridcolor="rgba(255,255,255,0.07)",
+            rangeslider=dict(visible=True, thickness=0.05, bgcolor="#111318", bordercolor="rgba(255,255,255,0.08)"),
             rangeselector=dict(
                 buttons=[
                     dict(count=1,  label="1m", step="month", stepmode="backward"),
@@ -349,8 +329,8 @@ def build_figure(daily: pd.DataFrame, disc: pd.DataFrame) -> go.Figure:
                     dict(count=6,  label="6m", step="month", stepmode="backward"),
                     dict(step="all", label="All"),
                 ],
-                font=dict(size=11),
-                bgcolor="#e0e7ff",
+                font=dict(size=11, color="#eef0f3"),
+                bgcolor="rgba(94,106,210,0.14)",
                 activecolor=C["attack_bar"],
             ),
         ),
@@ -358,18 +338,18 @@ def build_figure(daily: pd.DataFrame, disc: pd.DataFrame) -> go.Figure:
         legend=dict(
             orientation="v",
             x=1.08, y=1,
-            bgcolor="rgba(255,255,255,0.92)",
-            bordercolor="#e2e8f0",
+            bgcolor="rgba(17,19,24,0.85)",
+            bordercolor="rgba(255,255,255,0.08)",
             borderwidth=1,
-            font=dict(size=11),
+            font=dict(size=11, color="#9297a3"),
             tracegroupgap=10,
         ),
 
         hovermode="x unified",
         hoverlabel=dict(
-            bgcolor="white",
-            bordercolor="#e2e8f0",
-            font=dict(size=12, color="#1e293b"),
+            bgcolor="#16181d",
+            bordercolor="rgba(255,255,255,0.14)",
+            font=dict(size=12, color="#eef0f3"),
         ),
 
         barmode="overlay",
@@ -393,7 +373,7 @@ _HTML_WRAPPER = """\
     margin: 0; padding: 0;
     width: 100%; height: 100%;
     overflow: hidden;
-    background: #f8fafc;
+    background: #0a0b0d;
   }}
   #chart {{
     width: 100%;

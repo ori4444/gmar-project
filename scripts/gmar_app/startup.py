@@ -11,7 +11,6 @@ from PySide6.QtWidgets import (
     QDialog,
     QFrame,
     QGridLayout,
-    QHBoxLayout,
     QLabel,
     QMessageBox,
     QPushButton,
@@ -31,13 +30,11 @@ def _from_qdate(v: QDate) -> date:
 
 
 class StartupDialog(QDialog):
-    def __init__(self, default_start: date, default_end: date,
-                 default_mode: str, parent=None):
+    def __init__(self, default_start: date, default_end: date, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Gmar — Select Dates")
-        self.setFixedSize(500, 440)
+        self.setWindowTitle("גמר — בחירת תאריכים")
+        self.setFixedSize(500, 360)
         self.setWindowFlags(Qt.Dialog | Qt.WindowTitleHint | Qt.WindowCloseButtonHint)
-        self._mode = default_mode
         self._build(default_start, default_end)
         self.setStyleSheet(self._css())
 
@@ -55,7 +52,7 @@ class StartupDialog(QDialog):
         )
         root.addWidget(logo)
 
-        title = QLabel("Attack Review")
+        title = QLabel("בדיקת תקיפות")
         title.setAlignment(Qt.AlignCenter)
         title.setStyleSheet(
             f"font-size:22px; font-weight:900; color:{P.TXT}; "
@@ -63,7 +60,7 @@ class StartupDialog(QDialog):
         )
         root.addWidget(title)
 
-        sub = QLabel("Select the date range to review")
+        sub = QLabel("בחרו טווח תאריכים לבדיקה")
         sub.setAlignment(Qt.AlignCenter)
         sub.setStyleSheet(f"font-size:13px; color:{P.TXT2}; margin-bottom:24px;")
         root.addWidget(sub)
@@ -77,8 +74,8 @@ class StartupDialog(QDialog):
         card_lay.setVerticalSpacing(14)
 
         for row, (lbl_text, attr, val) in enumerate([
-            ("From", "start_edit", start),
-            ("To",   "end_edit",   end),
+            ("מתאריך", "start_edit", start),
+            ("עד תאריך",   "end_edit",   end),
         ]):
             lbl = QLabel(lbl_text)
             lbl.setStyleSheet(
@@ -91,65 +88,31 @@ class StartupDialog(QDialog):
             w.setDate(_to_qdate(val))
             w.setFixedHeight(44)
             setattr(self, attr, w)
-            card_lay.addWidget(lbl, row, 0)
-            card_lay.addWidget(w,   row, 1)
+            card_lay.addWidget(lbl, row, 1)
+            card_lay.addWidget(w,   row, 0)
 
         root.addWidget(card)
-        root.addSpacing(16)
-
-        # Mode toggle
-        mode_row = QHBoxLayout()
-        mode_row.setSpacing(10)
-        self._mode_btns: dict[str, QPushButton] = {}
-        for val, label in [("manual", "Manual Review"), ("blind", "Auto Insert")]:
-            btn = QPushButton(label)
-            btn.setFixedHeight(44)
-            btn.clicked.connect(lambda _, v=val: self._set_mode(v))
-            self._mode_btns[val] = btn
-            mode_row.addWidget(btn)
-        root.addLayout(mode_row)
         root.addSpacing(20)
-        self._refresh_mode()
 
         # Go button
-        go = QPushButton("Start Review  →")
+        go = QPushButton("התחלת בדיקה  ←")
         go.setObjectName("GoBtn")
         go.setFixedHeight(52)
         go.clicked.connect(self._on_go)
         go.setDefault(True)
         root.addWidget(go)
 
-    def _set_mode(self, val: str):
-        self._mode = val
-        self._refresh_mode()
-
-    def _refresh_mode(self):
-        for val, btn in self._mode_btns.items():
-            if val == self._mode:
-                btn.setStyleSheet(
-                    f"QPushButton{{background:{P.INDIGO};color:white;"
-                    f"border:3px solid {P.INDIGO};border-radius:10px;"
-                    f"font-size:14px;font-weight:800;padding:0 16px;}}"
-                )
-            else:
-                btn.setStyleSheet(
-                    f"QPushButton{{background:{P.CARD_BG};color:{P.TXT2};"
-                    f"border:2px solid {P.CARD_BORDER};border-radius:10px;"
-                    f"font-size:14px;font-weight:600;padding:0 16px;}}"
-                    f"QPushButton:hover{{border-color:{P.INDIGO};color:{P.INDIGO};}}"
-                )
-
     def _on_go(self):
         s = _from_qdate(self.start_edit.date())
         e = _from_qdate(self.end_edit.date())
         if s > e:
-            QMessageBox.warning(self, "Error", "Start date must be before end date.")
+            QMessageBox.warning(self, "שגיאה", "תאריך ההתחלה חייב להיות לפני תאריך הסיום.")
             return
         self.accept()
 
     def options(self):
         return (
-            self._mode,
+            "manual",
             _from_qdate(self.start_edit.date()),
             _from_qdate(self.end_edit.date()),
         )
@@ -185,8 +148,8 @@ class StartupDialog(QDialog):
         """
 
 
-def show_startup_dialog(default_start: date, default_end: date, default_mode: str):
-    dlg = StartupDialog(default_start, default_end, default_mode)
+def show_startup_dialog(default_start: date, default_end: date):
+    dlg = StartupDialog(default_start, default_end)
     if dlg.exec() == QDialog.Accepted:
         return dlg.options()
     return None

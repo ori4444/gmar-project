@@ -34,7 +34,7 @@ from xgboost import XGBClassifier
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from shared.config import (
-    DB_DSN, FEATURES_TABLE, CHANNEL_USERNAME,
+    DB_DSN, FEATURES_TABLE, EXILENOVA_CHANNEL,
     EVENTS_TABLE, ET_TABLE, TARGETS_TABLE,
 )
 from analysis.window_analysis import (
@@ -42,9 +42,10 @@ from analysis.window_analysis import (
     aggregate_attacks, build_full_daily,
     DISCOURSE_COLS, DISCOURSE_COLS_EXT, CV_SPLITS, DEPTH_SCORES,
     add_derived_discourse, _compute_rolling_stats, build_features, BASELINE_WINDOW,
+    build_multi_dataset,
 )
 from analysis.multi_target_analysis import (
-    _BASE_OUTCOME_TARGETS, build_multi_dataset,
+    _BASE_OUTCOME_TARGETS,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -265,7 +266,7 @@ def _fetch_discourse(conn, max_lb: int) -> pd.DataFrame:
             COALESCE(war_total,   0) AS war_total,
             COALESCE(war_ukr_ru,  0) AS war_ukr_ru
         FROM {FEATURES_TABLE}
-        WHERE channel = '{CHANNEL_USERNAME}'
+        WHERE channel = '{EXILENOVA_CHANNEL}'
         ORDER BY feature_date DESC
         LIMIT {n_rows}
     """

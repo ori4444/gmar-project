@@ -3,12 +3,63 @@ Home page — main navigation hub.
 """
 from __future__ import annotations
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget,
+    QFrame, QHBoxLayout, QLabel, QVBoxLayout, QWidget,
 )
 
 from . import palette as P
+from . import styles as S
+
+
+class _NavCard(QFrame):
+    """
+    The entire card is the button — floating, shadow-lifted, and rising
+    further on hover for a tangible 3D/airborne feel.
+    """
+
+    clicked = Signal()
+
+    def __init__(self, accent: str, parent=None):
+        super().__init__(parent)
+        self._pressed = False
+        self.setCursor(Qt.PointingHandCursor)
+
+        self._idle_qss = S.card_qss("QFrame", radius=P.RADIUS_XL)
+        self._hover_qss = (
+            f"QFrame {{ background:qlineargradient(x1:0,y1:0,x2:0,y2:1, "
+            f"stop:0 {P.CARD_BG_HOVER}, stop:1 {P.CARD_BG_TOP}); "
+            f"border:1.5px solid {accent}; border-radius:{P.RADIUS_XL}px; }}"
+        )
+        self.setStyleSheet(self._idle_qss)
+
+        self._shadow = S.apply_card_shadow(self, blur=44, alpha=110, y_offset=16)
+        self._lift = S.HoverLift(
+            self._shadow,
+            idle=(44, 110, 16),
+            hover=(70, 170, 30),
+        )
+
+    def enterEvent(self, event):
+        self.setStyleSheet(self._hover_qss)
+        self._lift.lift()
+        super().enterEvent(event)
+
+    def leaveEvent(self, event):
+        self.setStyleSheet(self._idle_qss)
+        self._lift.rest()
+        super().leaveEvent(event)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self._pressed = True
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.LeftButton and self._pressed and self.rect().contains(event.position().toPoint()):
+            self.clicked.emit()
+        self._pressed = False
+        super().mouseReleaseEvent(event)
 
 
 class HomePage(QWidget):
@@ -22,138 +73,102 @@ class HomePage(QWidget):
         attacks: callable,
         discourse: callable,
         graphs: callable,
-        multi_target: callable | None = None,
         predictions: callable | None = None,
     ):
         self._nav_cbs = {
             "attacks":      attacks,
             "discourse":    discourse,
             "graphs":       graphs,
-            "multi_target": multi_target or (lambda: None),
             "predictions":  predictions  or (lambda: None),
         }
 
+    def reset_view(self):
+        """No transient state to clear — kept for the sidebar's reset hook."""
+        pass
+
     def _setup_ui(self):
+        self.setStyleSheet(S.window_bg_qss())
         root = QVBoxLayout(self)
-        root.setContentsMargins(60, 50, 60, 50)
+        root.setContentsMargins(60, 48, 60, 40)
         root.setSpacing(0)
         root.setAlignment(Qt.AlignCenter)
 
         # Logo
         logo_lbl = QLabel("G")
         logo_lbl.setAlignment(Qt.AlignCenter)
-        logo_lbl.setFixedHeight(84)
+        logo_lbl.setFixedHeight(80)
         logo_lbl.setStyleSheet(
-            f"color:{P.INDIGO}; font-size:64px; font-weight:900; border:none;"
+            f"color:{P.INDIGO}; font-family:{P.FONT_STACK}; font-size:58px; "
+            f"font-weight:800; border:none;"
         )
         root.addWidget(logo_lbl)
 
         title_lbl = QLabel("G  M  A  R")
         title_lbl.setAlignment(Qt.AlignCenter)
         title_lbl.setStyleSheet(
-            f"color:{P.TXT}; font-size:28px; font-weight:900; "
-            f"letter-spacing:10px; border:none; padding-bottom:6px;"
+            f"color:{P.TXT}; font-family:{P.FONT_STACK}; font-size:23px; font-weight:700; "
+            f"letter-spacing:10px; border:none; padding-bottom:8px;"
         )
         root.addWidget(title_lbl)
 
-        sub_lbl = QLabel("Energy Infrastructure Attack Analysis System")
+        sub_lbl = QLabel("מערכת ניתוח תקיפות על תשתיות אנרגיה")
         sub_lbl.setAlignment(Qt.AlignCenter)
         sub_lbl.setStyleSheet(
-            f"color:{P.TXT2}; font-size:15px; font-weight:500; "
-            f"border:none; padding-bottom:48px;"
+            f"color:{P.TXT2}; font-family:{P.FONT_STACK}; font-size:14px; font-weight:500; "
+            f"border:none; padding-bottom:64px;"
         )
         root.addWidget(sub_lbl)
 
         # Cards row
         cards_row = QHBoxLayout()
-        cards_row.setSpacing(24)
+        cards_row.setSpacing(28)
         cards_row.setAlignment(Qt.AlignCenter)
 
         card_specs = [
-            ("📊", "Graphs / Analysis",
-             "Display interactive timeline\nof attacks and discourse",
-             P.VIOLET, "graphs"),
-            ("⚡", "Attacks",
-             "Review and update attack events\non energy infrastructure",
-             P.AMBER, "attacks"),
-            ("📡", "Discourse",
-             "Process daily discourse data\nfrom Telegram",
-             P.CYAN, "discourse"),
-            ("🎯", "Multi-Target",
-             "Discover what attack types\nfollow each discourse pattern",
-             P.GREEN, "multi_target"),
-            ("🤖", "Predictions",
-             "Run ML predictions on\nupcoming attacks",
-             P.INDIGO, "predictions"),
+            ("📊", "גרפים וניתוח", P.VIOLET, "graphs"),
+            ("⚡", "תקיפות",       P.AMBER,  "attacks"),
+            ("📡", "שיח",         P.CYAN,   "discourse"),
+            ("🤖", "תחזיות",      P.INDIGO, "predictions"),
         ]
 
-        for icon, title, desc, color, key in card_specs:
-            card = self._make_card(icon, title, desc, color, key)
+        for icon, title, color, key in card_specs:
+            card = self._make_card(icon, title, color, key)
             cards_row.addWidget(card)
 
         root.addLayout(cards_row)
         root.addStretch()
 
-        info_lbl = QLabel("Select a screen to get started")
+        info_lbl = QLabel("בחרו מסך כדי להתחיל")
         info_lbl.setAlignment(Qt.AlignCenter)
         info_lbl.setStyleSheet(
-            f"color:{P.TXT3}; font-size:12px; border:none; "
-            f"padding-top:20px; direction:rtl;"
+            f"color:{P.TXT3}; font-family:{P.FONT_STACK}; font-size:12px; border:none; "
+            f"padding-top:20px;"
         )
         root.addWidget(info_lbl)
 
-    def _make_card(self, icon: str, title: str, desc: str, color: str, key: str) -> QFrame:
-        frame = QFrame()
-        frame.setFixedSize(270, 290)
-        # Cloud: soft cream fill, no border, hover shows subtle accent edge
-        frame.setStyleSheet(
-            f"QFrame#card_{key} {{ "
-            f"background:{P.INPUT_BG}; "
-            f"border: 1px solid transparent; "
-            f"border-radius:20px; }}"
-            f"QFrame#card_{key}:hover {{ border-color:{color}; }}"
-        )
-        frame.setObjectName(f"card_{key}")
+    def _make_card(self, icon: str, title: str, color: str, key: str) -> QFrame:
+        card = _NavCard(color)
+        card.setFixedSize(230, 230)
+        card.setObjectName(f"card_{key}")
 
-        lay = QVBoxLayout(frame)
-        lay.setContentsMargins(24, 26, 24, 20)
-        lay.setSpacing(10)
+        lay = QVBoxLayout(card)
+        lay.setContentsMargins(24, 24, 24, 24)
+        lay.setSpacing(14)
         lay.setAlignment(Qt.AlignCenter)
 
         icon_lbl = QLabel(icon)
         icon_lbl.setAlignment(Qt.AlignCenter)
-        icon_lbl.setStyleSheet(f"font-size:52px; border:none;")
+        icon_lbl.setStyleSheet("font-size:52px; border:none; background:transparent;")
         lay.addWidget(icon_lbl)
 
         title_lbl = QLabel(title)
         title_lbl.setAlignment(Qt.AlignCenter)
+        title_lbl.setWordWrap(True)
         title_lbl.setStyleSheet(
-            f"color:{P.TXT}; font-size:17px; font-weight:900; border:none; direction:rtl;"
+            f"color:{P.TXT}; font-family:{P.FONT_STACK}; font-size:16px; font-weight:700; "
+            f"border:none; background:transparent;"
         )
         lay.addWidget(title_lbl)
 
-        desc_lbl = QLabel(desc)
-        desc_lbl.setAlignment(Qt.AlignCenter)
-        desc_lbl.setWordWrap(True)
-        desc_lbl.setStyleSheet(
-            f"color:{P.TXT2}; font-size:13px; line-height:1.5; "
-            f"border:none; direction:rtl;"
-        )
-        lay.addWidget(desc_lbl)
-
-        lay.addStretch()
-
-        go_btn = QPushButton("Open  →")
-        go_btn.setFixedHeight(42)
-        go_btn.setCursor(Qt.PointingHandCursor)
-        go_btn.setStyleSheet(
-            f"QPushButton{{background:transparent;color:{color};"
-            f"border:2px solid {color};border-radius:11px;"
-            f"font-size:14px;font-weight:800;direction:rtl;}}"
-            f"QPushButton:hover{{background:{color};color:#fff;}}"
-            f"QPushButton:pressed{{background:{color}cc;color:#fff;}}"
-        )
-        go_btn.clicked.connect(lambda checked=False, k=key: self._nav_cbs.get(k, lambda: None)())
-        lay.addWidget(go_btn)
-
-        return frame
+        card.clicked.connect(lambda k=key: self._nav_cbs.get(k, lambda: None)())
+        return card

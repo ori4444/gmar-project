@@ -3,6 +3,8 @@ from datetime import timedelta, timezone
 API_ID = 35287345
 API_HASH = "31107dcdd98ff1f5632340aba1ca19c5"
 CHANNEL_USERNAME = "astrapress"
+EXILENOVA_CHANNEL = "exilenova_plus"
+RADAR_CHANNEL = "radarrussiia"
 SESSION_NAME = "astra_session"
 
 DB_DSN = "postgresql://postgres.bzrrkrqqsfiwejrjiijs:Ori1999cohen1@aws-1-ap-northeast-1.pooler.supabase.com:5432/postgres?sslmode=require"
@@ -25,5 +27,4 @@ TRANSLATION_TARGET = "iw"
 # How many parsed message bundles to prefetch while you review
 PREFETCH_QUEUE_SIZE = 20
 
-REVIEW_MODE = "manual"   # "manual" or "blind"
 ONLY_CRITICAL_UPDATES = True

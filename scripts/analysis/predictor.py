@@ -25,7 +25,7 @@ if _SCRIPTS not in sys.path:
 from sklearn.metrics import roc_auc_score
 from sklearn.model_selection import TimeSeriesSplit
 
-from shared.config import DB_DSN, FEATURES_TABLE, CHANNEL_USERNAME, EVENTS_TABLE
+from shared.config import DB_DSN, FEATURES_TABLE, EXILENOVA_CHANNEL, EVENTS_TABLE
 from analysis.window_analysis import (
     load_attacks, load_discourse,
     aggregate_attacks, build_full_daily,
@@ -197,7 +197,7 @@ def _fetch_recent_discourse(conn, lookback: int) -> pd.DataFrame:
             COALESCE(war_total,   0) AS war_total,
             COALESCE(war_ukr_ru,  0) AS war_ukr_ru
         FROM {FEATURES_TABLE}
-        WHERE channel = '{CHANNEL_USERNAME}'
+        WHERE channel = '{EXILENOVA_CHANNEL}'
         ORDER BY feature_date DESC
         LIMIT {lookback}
     """

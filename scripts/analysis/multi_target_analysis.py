@@ -27,8 +27,11 @@ Usage
 from __future__ import annotations
 
 import json
+import os
 import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+from typing import Callable
 
 import numpy as np
 import pandas as pd
@@ -44,9 +47,8 @@ from shared.config import DB_DSN, EVENTS_TABLE, ET_TABLE, TARGETS_TABLE
 from analysis.window_analysis import (
     load_attacks, load_discourse,
     aggregate_attacks, build_full_daily,
-    DISCOURSE_COLS, DISCOURSE_COLS_EXT, CV_SPLITS,
-    add_derived_discourse, _compute_rolling_stats, build_features, BASELINE_WINDOW,
-    MAX_POS_RATE,
+    CV_SPLITS, add_derived_discourse, add_rolling_baselines, MAX_POS_RATE,
+    FeatureCache, labels_for_indices, make_throttled_progress,
 )
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -58,20 +60,26 @@ PROFILE_LOOKBACK = 10
 PROFILE_HORIZON  = 3
 
 # op definitions:
-#   gt0  → int(window_sum > 0)
-#   ge3  → int(window_max >= 3)
-#   sum  → float(window_sum)
-#   max  → float(window_max)
+#   gt0            → int(window_sum > 0)
+#   ge3            → int(window_max >= 3)
+#   sum            → float(window_sum)
+#   max            → float(window_max)
+#   above_baseline → int(window_sum > target's own trailing BASELINE_WINDOW-day
+#                    rate x horizon) — "busier than usual" instead of "did
+#                    anything happen", for targets whose raw base rate is so
+#                    high that gt0/ge3 is answered "yes" almost every day
+#                    (verified >70% positive post label-cutoff fix: any_attack,
+#                    significant, any_fire, any_hit, deep_strike, repeated_strike).
 _BASE_OUTCOME_TARGETS: list[dict] = [
     # Core binary outcomes
-    {"name": "any_attack",      "col": "attack_count",    "type": "binary", "op": "gt0"},
-    {"name": "significant",     "col": "significant",     "type": "binary", "op": "gt0"},
-    {"name": "any_fire",        "col": "fire_count",      "type": "binary", "op": "gt0"},
-    {"name": "any_hit",         "col": "hit_count",       "type": "binary", "op": "gt0"},
+    {"name": "any_attack",      "col": "attack_count",    "type": "binary", "op": "above_baseline"},
+    {"name": "significant",     "col": "significant",     "type": "binary", "op": "above_baseline"},
+    {"name": "any_fire",        "col": "fire_count",      "type": "binary", "op": "above_baseline"},
+    {"name": "any_hit",         "col": "hit_count",       "type": "binary", "op": "above_baseline"},
     {"name": "any_shutdown",    "col": "shutdown_count",  "type": "binary", "op": "gt0"},
-    {"name": "deep_strike",     "col": "depth_score",     "type": "binary", "op": "ge3"},
+    {"name": "deep_strike",     "col": "depth_score",     "type": "binary", "op": "above_baseline"},
     {"name": "combined_strike",  "col": "combined_count",  "type": "binary", "op": "gt0"},
-    {"name": "repeated_strike", "col": "repeated_count",  "type": "binary", "op": "gt0"},
+    {"name": "repeated_strike", "col": "repeated_count",  "type": "binary", "op": "above_baseline"},
     # Threshold-based binary (replacing regression targets)
     {"name": "multi_attack",    "col": "attack_count",    "type": "binary", "op": "sum_ge", "threshold": 3},
     {"name": "any_explosion",   "col": "explosion_total", "type": "binary", "op": "gt0"},
@@ -132,73 +140,20 @@ def load_target_type_daily(conn) -> tuple[pd.DataFrame, list[str]]:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-#  Outcome computation
-# ─────────────────────────────────────────────────────────────────────────────
-
-def _compute_outcome(future_slice: pd.DataFrame, outcome: dict) -> float:
-    col = outcome["col"]
-    op  = outcome["op"]
-    if col not in future_slice.columns:
-        return 0.0
-    if op == "gt0":
-        return float(future_slice[col].sum() > 0)
-    if op == "ge3":
-        return float(future_slice[col].max() >= 3)
-    if op == "sum_ge":
-        return float(future_slice[col].sum() >= outcome.get("threshold", 1))
-    if op == "max_ge":
-        return float(future_slice[col].max() >= outcome.get("threshold", 1))
-    # Legacy ops kept for backward compatibility
-    if op == "sum":
-        return float(future_slice[col].sum())
-    if op == "max":
-        return float(future_slice[col].max())
-    raise ValueError(f"Unknown op: {op!r}")
-
-
-def build_multi_dataset(
-    df: pd.DataFrame, lookback: int, horizon: int, outcome: dict,
-) -> tuple[pd.DataFrame, pd.Series]:
-    """X = temporal discourse features over [D-lookback, D-1], y = outcome over [D, D+horizon-1]."""
-    disc_cols = [c for c in DISCOURSE_COLS_EXT if c in df.columns]
-    rolling_means, rolling_stds = _compute_rolling_stats(df, disc_cols)
-    X_rows, y_rows = [], []
-    feat_names = None
-    n = len(df)
-
-    for i in range(lookback, n - horizon + 1):
-        window = df.iloc[i - lookback : i]
-        future = df.iloc[i : i + horizon]
-        bm = rolling_means.iloc[i - 1]
-        bs = rolling_stds.iloc[i - 1]
-        x, names = build_features(window, disc_cols, bm, bs)
-        if feat_names is None:
-            feat_names = names
-        X_rows.append(x)
-        y_rows.append(_compute_outcome(future, outcome))
-
-    if not X_rows:
-        return pd.DataFrame(), pd.Series(dtype=float, name=outcome["name"])
-
-    X = pd.DataFrame(X_rows, columns=feat_names)
-    y = pd.Series(y_rows, name=outcome["name"])
-    return X, y
-
-
-# ─────────────────────────────────────────────────────────────────────────────
 #  Evaluators
 # ─────────────────────────────────────────────────────────────────────────────
 
-def _make_xgb(pos: int, neg: int) -> XGBClassifier:
+def _make_xgb(pos: int, neg: int, n_jobs: int | None = None) -> XGBClassifier:
     return XGBClassifier(
         n_estimators=100, max_depth=4, learning_rate=0.05,
         subsample=0.8, colsample_bytree=0.6, min_child_weight=5,
         scale_pos_weight=neg / max(pos, 1),
         eval_metric="logloss", random_state=42, verbosity=0,
+        n_jobs=n_jobs,
     )
 
 
-def _evaluate_binary(X: pd.DataFrame, y: pd.Series) -> dict:
+def _evaluate_binary(X: pd.DataFrame, y: pd.Series, n_jobs: int | None = None) -> dict:
     base = {"auc": float("nan"), "auc_std": float("nan"),
             "n": len(X), "n_folds": 0, "pos_rate": float(y.mean())}
     if len(np.unique(y)) < 2:
@@ -213,7 +168,7 @@ def _evaluate_binary(X: pd.DataFrame, y: pd.Series) -> dict:
         if len(np.unique(ytr)) < 2 or len(np.unique(yte)) < 2:
             continue
         pos_tr = int(ytr.sum())
-        m = _make_xgb(pos_tr, len(ytr) - pos_tr)
+        m = _make_xgb(pos_tr, len(ytr) - pos_tr, n_jobs=n_jobs)
         m.fit(Xtr, ytr)
         aucs.append(roc_auc_score(yte, m.predict_proba(Xte)[:, 1]))
 
@@ -227,28 +182,85 @@ def _evaluate_binary(X: pd.DataFrame, y: pd.Series) -> dict:
 #  Phase 1 — Grid search
 # ─────────────────────────────────────────────────────────────────────────────
 
-def run_analysis(df: pd.DataFrame, outcomes: list[dict]) -> pd.DataFrame:
-    rows = []
-    for outcome in outcomes:
-        if outcome["type"] != "binary":
-            continue
-        best_val, best_info = float("-inf"), {}
-        best_val_fb, best_info_fb = float("-inf"), {}  # fallback (ignores pos gate)
+def run_analysis(
+    df: pd.DataFrame,
+    outcomes: list[dict],
+    feature_cache: FeatureCache | None = None,
+    progress_cb: Callable[[dict], None] | None = None,
+    max_workers: int | None = None,
+) -> pd.DataFrame:
+    """
+    Grid search every (outcome × lookback × horizon) combination.
 
-        for lookback in LOOKBACKS:
-            for horizon in HORIZONS:
-                X, y = build_multi_dataset(df, lookback, horizon, outcome)
-                m   = _evaluate_binary(X, y)
-                val = m.get("auc", float("nan"))
-                row = {"outcome": outcome["name"], "type": "binary",
-                       "lookback": lookback, "horizon": horizon, **m}
+    Speed: the feature matrix X for a given (lookback, horizon) doesn't
+    depend on the outcome — only the label y does — so X is built once per
+    (lookback, horizon) via `feature_cache` and reused across every outcome
+    (was previously rebuilt from scratch per outcome: ~17x more work). For a
+    fixed (lookback, horizon), the per-outcome CV+fit calls are independent
+    of each other, so they run concurrently in a thread pool; each XGBoost
+    fit is pinned to n_jobs=1 to avoid oversubscribing CPU cores, which also
+    makes each fit's threading fully deterministic (same result as before,
+    just faster).
+    """
+    progress_cb = make_throttled_progress(progress_cb)
+    cache = feature_cache or FeatureCache(df)
+    binary_outcomes = [oc for oc in outcomes if oc["type"] == "binary"]
+    combos = [(lb, h) for lb in LOOKBACKS for h in HORIZONS]
+    total_steps = len(combos) * len(binary_outcomes)
+    workers = max_workers or min(8, os.cpu_count() or 4)
+
+    rows: list[dict] = []
+    best: dict[str, tuple[float, dict]] = {
+        oc["name"]: (float("-inf"), {}) for oc in binary_outcomes
+    }
+    best_fb: dict[str, tuple[float, dict]] = {
+        oc["name"]: (float("-inf"), {}) for oc in binary_outcomes
+    }
+
+    step = 0
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        for lookback, horizon in combos:
+            X, row_indices, _ = cache.get(lookback, horizon)
+
+            def _eval_one(outcome, X=X, row_indices=row_indices, horizon=horizon):
+                y = labels_for_indices(df, row_indices, horizon, outcome)
+                return outcome, _evaluate_binary(X, y, n_jobs=1)
+
+            futures = [pool.submit(_eval_one, oc) for oc in binary_outcomes]
+            for fut in as_completed(futures):
+                outcome, m = fut.result()
+                name = outcome["name"]
+                val  = m.get("auc", float("nan"))
+                row  = {"outcome": name, "type": "binary",
+                        "lookback": lookback, "horizon": horizon, **m}
                 rows.append(row)
+
+                step += 1
+                if progress_cb:
+                    progress_cb({
+                        "phase": "grid_search", "step": step, "total": total_steps,
+                        "outcome": name, "lookback": lookback, "horizon": horizon,
+                        "auc": (None if np.isnan(val) else val),
+                    })
+
                 if np.isnan(val) or m.get("n_folds", 0) < 2:
                     continue
-                if val > best_val_fb:
-                    best_val_fb, best_info_fb = val, row
-                if m.get("pos_rate", 1.0) <= MAX_POS_RATE and val > best_val:
-                    best_val, best_info = val, row
+                if val > best_fb[name][0]:
+                    best_fb[name] = (val, row)
+                if m.get("pos_rate", 1.0) <= MAX_POS_RATE and val > best[name][0]:
+                    best[name] = (val, row)
+                    if progress_cb:
+                        progress_cb({
+                            "phase": "grid_search", "milestone": True,
+                            "step": step, "total": total_steps,
+                            "outcome": name, "lookback": lookback, "horizon": horizon,
+                            "auc": val, "status": "new_best",
+                        })
+
+    for outcome in binary_outcomes:
+        name = outcome["name"]
+        best_val, best_info = best[name]
+        best_val_fb, best_info_fb = best_fb[name]
 
         # Fall back to unconstrained best if nothing passed the pos-rate gate
         if not best_info and best_info_fb:
@@ -258,14 +270,26 @@ def run_analysis(df: pd.DataFrame, outcomes: list[dict]) -> pd.DataFrame:
             flag = ""
 
         if best_info:
-            print(f"  {outcome['name']:22s}  best lb={int(best_info['lookback']):>2} "
+            print(f"  {name:22s}  best lb={int(best_info['lookback']):>2} "
                   f"h={int(best_info['horizon'])}  "
                   f"auc={best_val:.3f} ±{best_info.get('auc_std', float('nan')):.3f}  "
                   f"pos={best_info['pos_rate']:.1%}{flag}")
         else:
-            print(f"  {outcome['name']:22s}  no valid model")
+            print(f"  {name:22s}  no valid model")
 
-    return pd.DataFrame(rows)
+    result_df = pd.DataFrame(rows)
+    if not result_df.empty:
+        # Restore the original outcome-major, lookback, horizon ordering
+        # (loop above is combo-major for cache locality) so the saved CSV
+        # is unchanged in row order from before this refactor.
+        outcome_order = {oc["name"]: idx for idx, oc in enumerate(binary_outcomes)}
+        result_df["_ord"] = result_df["outcome"].map(outcome_order)
+        result_df = (
+            result_df.sort_values(["_ord", "lookback", "horizon"])
+            .drop(columns="_ord")
+            .reset_index(drop=True)
+        )
+    return result_df
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -273,33 +297,25 @@ def run_analysis(df: pd.DataFrame, outcomes: list[dict]) -> pd.DataFrame:
 # ─────────────────────────────────────────────────────────────────────────────
 
 def compute_feature_corr(df: pd.DataFrame, outcomes: list[dict],
-                         lookback: int = 10, horizon: int = 1) -> pd.DataFrame:
-    """Pearson r between each temporal feature representation and each outcome at (lb, h)."""
-    disc_cols = [c for c in DISCOURSE_COLS_EXT if c in df.columns]
-    rolling_means, rolling_stds = _compute_rolling_stats(df, disc_cols)
-    n = len(df)
-    feat_rows, outcome_rows, feat_names = [], [], None
-
-    for i in range(lookback, n - horizon + 1):
-        window = df.iloc[i - lookback : i]
-        future = df.iloc[i : i + horizon]
-        bm = rolling_means.iloc[i - 1]
-        bs = rolling_stds.iloc[i - 1]
-        x, names = build_features(window, disc_cols, bm, bs)
-        if feat_names is None:
-            feat_names = names
-        feat_rows.append(x)
-        outcome_rows.append([_compute_outcome(future, oc) for oc in outcomes])
-
-    if not feat_rows:
+                         lookback: int = 10, horizon: int = 1,
+                         feature_cache: FeatureCache | None = None) -> pd.DataFrame:
+    """
+    Pearson r between each temporal feature representation and each outcome
+    at (lb, h). Reuses `feature_cache` — (lb=10, h=1) is already part of the
+    Phase 1 grid search, so this is normally a cache hit (no recomputation).
+    """
+    cache = feature_cache or FeatureCache(df)
+    X, row_indices, _ = cache.get(lookback, horizon)
+    if X.empty:
         return pd.DataFrame()
 
-    X = pd.DataFrame(feat_rows, columns=feat_names)
-    Y = pd.DataFrame(outcome_rows, columns=[oc["name"] for oc in outcomes])
+    Y = pd.DataFrame({
+        oc["name"]: labels_for_indices(df, row_indices, horizon, oc) for oc in outcomes
+    })
 
     return pd.DataFrame(
         {oc: X.corrwith(Y[oc]) for oc in Y.columns},
-        index=feat_names,
+        index=list(X.columns),
     )
 
 
@@ -310,29 +326,20 @@ def compute_feature_corr(df: pd.DataFrame, outcomes: list[dict],
 def find_attack_profiles(df: pd.DataFrame, outcomes: list[dict],
                          lookback: int = PROFILE_LOOKBACK,
                          horizon: int  = PROFILE_HORIZON,
-                         n_clusters: int = N_PROFILES) -> tuple[pd.DataFrame, list[dict]]:
+                         n_clusters: int = N_PROFILES,
+                         feature_cache: FeatureCache | None = None) -> tuple[pd.DataFrame, list[dict]]:
     """
     Cluster discourse feature windows into N profiles.
     Returns (profiles_df, profiles_json_list).
+    Reuses `feature_cache` — (lb=10, h=3) is already part of the Phase 1 grid
+    search, so this is normally a cache hit (no recomputation).
     """
-    disc_cols = [c for c in DISCOURSE_COLS_EXT if c in df.columns]
-    rolling_means, rolling_stds = _compute_rolling_stats(df, disc_cols)
-    n = len(df)
-    feat_rows, outcome_rows, feat_names = [], [], None
-
-    for i in range(lookback, n - horizon + 1):
-        window = df.iloc[i - lookback : i]
-        future = df.iloc[i : i + horizon]
-        bm = rolling_means.iloc[i - 1]
-        bs = rolling_stds.iloc[i - 1]
-        x, names = build_features(window, disc_cols, bm, bs)
-        if feat_names is None:
-            feat_names = names
-        feat_rows.append(x)
-        outcome_rows.append([_compute_outcome(future, oc) for oc in outcomes])
-
-    X = pd.DataFrame(feat_rows, columns=feat_names)
-    Y = pd.DataFrame(outcome_rows, columns=[oc["name"] for oc in outcomes])
+    cache = feature_cache or FeatureCache(df)
+    X, row_indices, _ = cache.get(lookback, horizon)
+    feat_names = list(X.columns)
+    Y = pd.DataFrame({
+        oc["name"]: labels_for_indices(df, row_indices, horizon, oc) for oc in outcomes
+    })
 
     scaler = StandardScaler()
     X_s    = scaler.fit_transform(X)
@@ -384,7 +391,14 @@ def find_attack_profiles(df: pd.DataFrame, outcomes: list[dict],
 #  Entry point
 # ─────────────────────────────────────────────────────────────────────────────
 
-def run() -> None:
+def run(progress_cb: Callable[[dict], None] | None = None) -> None:
+    progress_cb = make_throttled_progress(progress_cb)
+
+    def _emit(phase: str, message: str = ""):
+        if progress_cb:
+            progress_cb({"phase": phase, "step": 1, "total": 1, "message": message})
+
+    _emit("loading", "Loading discourse & attack history…")
     print("Connecting to database …")
     conn        = psycopg2.connect(DB_DSN)
     raw_attacks = load_attacks(conn)
@@ -395,6 +409,7 @@ def run() -> None:
     attacks_daily = aggregate_attacks(raw_attacks)
     df = build_full_daily(attacks_daily, disc)
     df = add_derived_discourse(df)
+    df = add_rolling_baselines(df)
 
     # Merge target-type binary columns into df
     if not ttype_daily.empty and ttype_cols:
@@ -415,13 +430,26 @@ def run() -> None:
     out_dir = Path(__file__).resolve().parents[2] / "data" / "analysis"
     out_dir.mkdir(parents=True, exist_ok=True)
 
+    # One feature cache shared across all three phases below — Phase 2 (lb=10,
+    # h=1) and Phase 3 (lb=10, h=3) are both already part of the Phase 1 grid
+    # (LOOKBACKS includes 10, HORIZONS includes 1 and 3), so they become cache
+    # hits with no extra feature-building work.
+    #
+    # max_label_date caps label windows at the last date attacks_daily actually
+    # covers — attack tracking can fall behind discourse ingestion, and without
+    # this, unreviewed recent days would silently read as "confirmed zero
+    # attacks" instead of being excluded. Discourse features past this date
+    # (e.g. for live inference) are untouched.
+    max_label_date = attacks_daily["date"].max() if not attacks_daily.empty else None
+    cache = FeatureCache(df, max_label_date=max_label_date)
+
     # ── Phase 1 ───────────────────────────────────────────────────────────────
     print(f"\n{'═'*72}")
     print("PHASE 1 — Multi-target grid search")
     print(f"  (lookbacks={LOOKBACKS}, horizons={HORIZONS})")
     print(f"{'─'*72}")
 
-    results = run_analysis(df, outcomes)
+    results = run_analysis(df, outcomes, feature_cache=cache, progress_cb=progress_cb)
     results_path = out_dir / "multi_target_results.csv"
     results.to_csv(results_path, index=False)
     print(f"\n  Saved → {results_path}")
@@ -430,8 +458,9 @@ def run() -> None:
     print(f"\n{'═'*72}")
     print("PHASE 2 — Feature × Outcome correlation  (lb=10, h=1)")
     print(f"{'─'*72}")
+    _emit("correlation", "Correlating features with outcomes…")
 
-    corr = compute_feature_corr(df, outcomes, lookback=10, horizon=1)
+    corr = compute_feature_corr(df, outcomes, lookback=10, horizon=1, feature_cache=cache)
     print(corr.round(3).to_string())
 
     corr_path = out_dir / "feature_outcome_corr.csv"
@@ -442,8 +471,9 @@ def run() -> None:
     print(f"\n{'═'*72}")
     print(f"PHASE 3 — Attack profiles  (K={N_PROFILES}, lb={PROFILE_LOOKBACK}, h={PROFILE_HORIZON})")
     print(f"{'─'*72}")
+    _emit("clustering", "Clustering attack profiles…")
 
-    profiles_df, profiles_json = find_attack_profiles(df, outcomes)
+    profiles_df, profiles_json = find_attack_profiles(df, outcomes, feature_cache=cache)
 
     binary_oc  = [oc["name"] for oc in outcomes if oc["type"] == "binary"][:5]
     print(f"\n  {'#':>3}  {'n':>5}  {'dominant features':<38}  "
@@ -463,6 +493,10 @@ def run() -> None:
     print(f"\n  Saved → {profiles_csv}")
     print(f"  Saved → {profiles_json_path}")
     print(f"\n{'═'*72}")
+    # Distinct from the pipeline's final "done" (train_bank's model bank
+    # completion) — this only marks the analysis half finishing, right before
+    # train_bank starts its own loading→diagnostics→training run.
+    _emit("analysis_done", "Analysis complete")
 
 
 if __name__ == "__main__":

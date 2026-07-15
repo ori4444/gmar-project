@@ -27,6 +27,7 @@ from PySide6.QtWidgets import (
 )
 
 from . import palette as P
+from . import styles as S
 
 SCRIPTS_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TIMELINE_SCRIPT = os.path.join(SCRIPTS_DIR, "analysis", "timeline.py")
@@ -38,25 +39,25 @@ OUTPUT_HTML = os.path.join(
 # Each entry: (Hebrew label, exact trace name from timeline.py, default_visible, color)
 
 ATTACK_SERIES = [
-    ("⚡ Attack Count",       "Attack Count",          True,  P.INDIGO),
-    ("📈 7-Day Rolling Mean", "7-Day Rolling Mean",    True,  "#a5b4fc"),
-    ("🔥 Fire Events",        "Fire Events",           True,  P.RED),
-    ("✅ Hit Confirmed",       "Hit Confirmed",         True,  P.GREEN),
-    ("🛑 Shutdowns",           "Shutdowns",             True,  "#f97316"),
-    ("🛡 Air Defense Active",  "Air Defense Active",    True,  P.AMBER),
-    ("🔀 Combined Strikes",   "Combined Strikes",      False, "#7c3aed"),
+    ("⚡ מספר תקיפות",         "Attack Count",          True,  P.INDIGO),
+    ("📈 ממוצע נע ל-7 ימים",   "7-Day Rolling Mean",    True,  "#a5b4fc"),
+    ("🔥 אירועי שריפה",        "Fire Events",           True,  P.RED),
+    ("✅ פגיעה מאושרת",        "Hit Confirmed",         True,  P.GREEN),
+    ("🛑 השבתות",              "Shutdowns",             True,  "#fb923c"),
+    ("🛡 הגנה אווירית פעילה",  "Air Defense Active",    True,  P.AMBER),
+    ("🔀 תקיפות משולבות",      "Combined Strikes",      False, "#a78bfa"),
 ]
 
 DISCOURSE_SERIES = [
-    ("🚁 Drone Mentions",      "Drone Mentions (pre)",           False, "#0ea5e9"),
-    ("🛡 Air Defense (pre)",   "Air Defense (pre)",              False, "#8b5cf6"),
-    ("✈ Airport Closures",     "Airport Closures (pre)",         False, "#fbbf24"),
-    ("❓ Uncertainty",          "Uncertainty (pre)",              False, "#94a3b8"),
-    ("⚡ Energy Attacks",      "Energy Attack Messages",         False, "#059669"),
-    ("✅ Energy Confirmations", "Energy Confirmations",           False, "#6ee7b7"),
-    ("🏭 Refinery/Depot",      "Energy Refinery/Depot",          False, "#065f46"),
-    ("📰 War Messages",        "War Messages (total)",           False, "#64748b"),
-    ("🎯 Ukrainian Strikes",   "Ukrainian Strikes on Russia",    False, "#334155"),
+    ("🚁 אזכורי רחפנים",          "Drone Mentions (pre)",           False, "#38bdf8"),
+    ("🛡 הגנה אווירית (מוקדם)",   "Air Defense (pre)",              False, "#8b5cf6"),
+    ("✈ סגירת שדות תעופה",       "Airport Closures (pre)",         False, "#fbbf24"),
+    ("❓ אי-ודאות",                "Uncertainty (pre)",              False, "#94a3b8"),
+    ("⚡ תקיפות אנרגיה",          "Energy Attack Messages",         False, "#34d399"),
+    ("✅ אישורי תקיפות אנרגיה",   "Energy Confirmations",           False, "#6ee7b7"),
+    ("🏭 בית זיקוק/מחסן",        "Energy Refinery/Depot",          False, "#10b981"),
+    ("📰 הודעות מלחמה",           "War Messages (total)",           False, "#94a3b8"),
+    ("🎯 תקיפות אוקראיניות",      "Ukrainian Strikes on Russia",    False, "#cbd5e1"),
 ]
 
 
@@ -68,18 +69,20 @@ def _panel_btn(text: str, color: str, hover: str) -> QPushButton:
     btn.setCursor(Qt.PointingHandCursor)
     btn.setStyleSheet(
         f"QPushButton{{background:transparent;color:{color};"
-        f"border:2px solid {color};border-radius:7px;"
-        f"font-size:12px;font-weight:700;}}"
-        f"QPushButton:hover{{background:{color};color:#fff;}}"
+        f"border:1px solid {color};border-radius:{P.RADIUS_MD}px;"
+        f"font-family:{P.FONT_STACK};font-size:12px;font-weight:700;}}"
+        f"QPushButton:hover{{background:{color};color:#0a0b0d;}}"
     )
+    S.bind_floating_button(btn, idle=(10, 55, 2), hover=(20, 100, 6), pressed=(4, 30, 1),
+                            flash_color=color)
     return btn
 
 
 def _group_label(text: str) -> QLabel:
     lbl = QLabel(text)
     lbl.setStyleSheet(
-        f"color:{P.TXT2}; font-size:10px; font-weight:900; "
-        f"letter-spacing:1px; border:none; direction:rtl; "
+        f"color:{P.TXT3}; font-family:{P.FONT_STACK}; font-size:10px; font-weight:700; "
+        f"letter-spacing:1px; border:none; "
         f"padding-top:6px;"
     )
     return lbl
@@ -88,7 +91,16 @@ def _group_label(text: str) -> QLabel:
 def _hline() -> QWidget:
     w = QWidget()
     w.setFixedHeight(1)
-    w.setStyleSheet(f"background:{P.DIVIDER}; border-radius:1px;")
+    w.setStyleSheet(S.divider_qss())
+    return w
+
+
+def _vline() -> QWidget:
+    """Hairline vertical divider — replaces a solid panel border so the
+    control column reads as floating over the page, not boxed into a bar."""
+    w = QWidget()
+    w.setFixedWidth(1)
+    w.setStyleSheet(S.divider_qss())
     return w
 
 
@@ -103,36 +115,38 @@ class GraphsPage(QWidget):
     # ── UI setup ──────────────────────────────────────────────────────────────
 
     def _setup_ui(self):
+        self.setStyleSheet(S.window_bg_qss())
         root = QHBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
         root.setSpacing(0)
 
         root.addWidget(self._build_panel())
+        root.addWidget(_vline())
         root.addWidget(self._build_webview_area(), 1)
 
     def _build_panel(self) -> QFrame:
+        # Transparent on purpose — the control column floats over the shared
+        # page gradient instead of sitting inside its own solid bar; a single
+        # hairline (_vline, added by the caller) is enough separation.
         panel = QFrame()
         panel.setFixedWidth(230)
-        # Soft right-edge divider = panel boundary (same as sidebar pattern)
-        panel.setStyleSheet(
-            f"QFrame {{ background:{P.BG}; "
-            f"border-right: 1px solid {P.DIVIDER}; "
-            f"border-top: none; border-left: none; border-bottom: none; }}"
-        )
+        panel.setStyleSheet("QFrame { background:transparent; border:none; }")
         lay = QVBoxLayout(panel)
-        lay.setContentsMargins(14, 16, 14, 16)
+        lay.setContentsMargins(16, 18, 16, 16)
         lay.setSpacing(5)
 
         # Header
-        hdr = QLabel("📊  Graph Layers")
+        hdr = QLabel("📊  שכבות בגרף")
         hdr.setStyleSheet(
-            f"color:{P.TXT}; font-size:14px; font-weight:900; "
-            f"border:none; direction:rtl;"
+            f"color:{P.TXT}; font-family:{P.FONT_STACK}; font-size:14px; font-weight:700; "
+            f"border:none;"
         )
         lay.addWidget(hdr)
 
-        sub = QLabel("Select which series to display")
-        sub.setStyleSheet(f"color:{P.TXT3}; font-size:11px; border:none; direction:rtl;")
+        sub = QLabel("בחרו אילו נתונים להציג")
+        sub.setStyleSheet(
+            f"color:{P.TXT3}; font-family:{P.FONT_STACK}; font-size:11px; border:none;"
+        )
         lay.addWidget(sub)
 
         lay.addSpacing(4)
@@ -140,7 +154,7 @@ class GraphsPage(QWidget):
         lay.addSpacing(4)
 
         # ── Group: Attacks ───────────────────────────────────────────────────
-        lay.addWidget(_group_label("ATTACKS"))
+        lay.addWidget(_group_label("תקיפות"))
 
         for label, trace_name, default_on, color in ATTACK_SERIES:
             cb = self._make_checkbox(label, trace_name, default_on, color)
@@ -151,7 +165,7 @@ class GraphsPage(QWidget):
         lay.addSpacing(4)
 
         # ── Group: Discourse ─────────────────────────────────────────────────
-        lay.addWidget(_group_label("DISCOURSE (right axis)"))
+        lay.addWidget(_group_label("שיח (ציר ימני)"))
 
         for label, trace_name, default_on, color in DISCOURSE_SERIES:
             cb = self._make_checkbox(label, trace_name, default_on, color)
@@ -163,9 +177,9 @@ class GraphsPage(QWidget):
 
         # Preset buttons
         presets = QHBoxLayout()
-        presets.setSpacing(6)
-        all_atk_btn  = _panel_btn("Attacks",  P.INDIGO,  P.INDIGO_D)
-        none_btn     = _panel_btn("Clear",    P.TXT3,    P.TXT2)
+        presets.setSpacing(10)
+        all_atk_btn  = _panel_btn("תקיפות",  P.INDIGO,  P.INDIGO_D)
+        none_btn     = _panel_btn("נקה",    P.TXT3,    P.TXT2)
         all_atk_btn.clicked.connect(self._preset_attacks_only)
         none_btn.clicked.connect(self._preset_none)
         presets.addWidget(all_atk_btn)
@@ -175,17 +189,22 @@ class GraphsPage(QWidget):
         lay.addSpacing(6)
 
         # Regenerate button
-        regen_btn = _panel_btn("🔄  Update Data", P.VIOLET, "#9333ea")
+        regen_btn = _panel_btn("🔄  עדכון נתונים", P.VIOLET, "#9333ea")
         regen_btn.setFixedHeight(38)
         regen_btn.clicked.connect(self._regen_timeline)
         lay.addWidget(regen_btn)
 
+        status_row = QHBoxLayout()
+        status_row.setSpacing(6)
+        self._spinner = S.LoadingSpinner(size=13)
+        status_row.addWidget(self._spinner)
         self._status_lbl = QLabel("")
         self._status_lbl.setWordWrap(True)
         self._status_lbl.setStyleSheet(
-            f"color:{P.TXT2}; font-size:11px; border:none; direction:rtl; padding-top:4px;"
+            f"color:{P.TXT2}; font-family:{P.FONT_STACK}; font-size:11px; border:none; padding-top:4px;"
         )
-        lay.addWidget(self._status_lbl)
+        status_row.addWidget(self._status_lbl, 1)
+        lay.addLayout(status_row)
 
         return panel
 
@@ -193,10 +212,12 @@ class GraphsPage(QWidget):
                        default_on: bool, color: str) -> QCheckBox:
         cb = QCheckBox(label)
         cb.setChecked(default_on)
+        cb.setCursor(Qt.PointingHandCursor)
         cb.setStyleSheet(
-            f"QCheckBox {{ color:{P.TXT}; font-size:12px; direction:rtl; border:none; }}"
-            f"QCheckBox::indicator {{ width:15px; height:15px; border-radius:3px; "
-            f"border:2px solid {color}; }}"
+            f"QCheckBox {{ color:{P.TXT2}; font-family:{P.FONT_STACK}; font-size:12px; "
+            f"border:none; padding:3px 0; }}"
+            f"QCheckBox::indicator {{ width:14px; height:14px; border-radius:4px; "
+            f"border:1.5px solid {color}; }}"
             f"QCheckBox::indicator:checked   {{ background:{color}; }}"
             f"QCheckBox::indicator:unchecked {{ background:transparent; }}"
         )
@@ -206,7 +227,7 @@ class GraphsPage(QWidget):
 
     def _build_webview_area(self) -> QWidget:
         area = QWidget()
-        area.setStyleSheet(f"background:{P.BG};")
+        area.setStyleSheet(S.window_bg_qss())
         lay = QVBoxLayout(area)
         lay.setContentsMargins(0, 0, 0, 0)
         lay.setSpacing(0)
@@ -217,15 +238,17 @@ class GraphsPage(QWidget):
         topbar.setStyleSheet(f"background:{P.BG};")
         tb = QHBoxLayout(topbar)
         tb.setContentsMargins(16, 6, 16, 6)
-        hdr_lbl = QLabel("Graphs & Analysis — Interactive Timeline")
-        hdr_lbl.setStyleSheet(
-            f"color:{P.TXT}; font-size:15px; font-weight:800; border:none; direction:rtl;"
-        )
+        tb.setSpacing(8)
         hdr_icon = QLabel("📈")
-        hdr_icon.setStyleSheet("font-size:20px; border:none;")
-        tb.addStretch()
-        tb.addWidget(hdr_lbl)
+        hdr_icon.setStyleSheet("font-size:18px; border:none; background:transparent;")
+        hdr_lbl = QLabel("גרפים וניתוח — ציר זמן אינטראקטיבי")
+        hdr_lbl.setStyleSheet(
+            f"color:{P.TXT}; font-family:{P.FONT_STACK}; font-size:14px; font-weight:700; "
+            f"border:none; background:transparent;"
+        )
         tb.addWidget(hdr_icon)
+        tb.addWidget(hdr_lbl)
+        tb.addStretch()
         lay.addWidget(topbar)
         lay.addWidget(_hline())
 
@@ -241,23 +264,23 @@ class GraphsPage(QWidget):
     def _load_html(self):
         if os.path.exists(OUTPUT_HTML):
             self._web.load(QUrl.fromLocalFile(OUTPUT_HTML))
-            self._set_status("Graph loaded", P.GREEN)
+            self._set_status("הגרף נטען", P.GREEN)
         else:
             self._web.setHtml(self._placeholder_html())
-            self._set_status("Click '🔄 Update Data' to generate the graph", P.TXT2)
+            self._set_status("לחצו על '🔄 עדכון נתונים' כדי ליצור את הגרף", P.TXT2)
 
     def _placeholder_html(self) -> str:
         return (
-            f"<html><body style='background:{P.BG};color:{P.TXT2};"
-            "font-family:Segoe UI,sans-serif;"
+            f"<html><body style='{S.window_bg_css()}color:{P.TXT2};"
+            "font-family:Inter,\"Segoe UI\",sans-serif;"
             "display:flex;align-items:center;justify-content:center;"
-            "height:100vh;margin:0;direction:rtl;'>"
+            "height:100vh;margin:0;'>"
             "<div style='text-align:center;'>"
-            "<div style='font-size:60px;margin-bottom:16px;'>📊</div>"
-            f"<div style='font-size:22px;font-weight:900;color:{P.TXT};margin-bottom:8px;'>"
-            "Graph not found</div>"
-            "<div style='font-size:14px;'>"
-            "Click \"🔄 Update Data\" in the sidebar to generate the graph"
+            "<div style='font-size:52px;margin-bottom:16px;opacity:0.8;'>📊</div>"
+            f"<div style='font-size:20px;font-weight:700;color:{P.TXT};margin-bottom:8px;'>"
+            "הגרף לא נמצא</div>"
+            "<div style='font-size:13px;'>"
+            "לחצו על \"🔄 עדכון נתונים\" בתפריט הצד כדי ליצור את הגרף"
             "</div></div></body></html>"
         )
 
@@ -303,14 +326,15 @@ class GraphsPage(QWidget):
 
     def _regen_timeline(self):
         if not os.path.exists(TIMELINE_SCRIPT):
-            self._set_status("Script not found", P.RED)
+            self._set_status("הסקריפט לא נמצא", P.RED)
             return
 
         if self._regen_proc and self._regen_proc.poll() is None:
-            self._set_status("Already updating...", P.AMBER)
+            self._set_status("כבר מתבצע עדכון...", P.AMBER)
             return
 
-        self._set_status("⏳ Generating graph…", P.TXT2)
+        self._spinner.start()
+        self._set_status("יוצרים גרף…", P.TXT2)
 
         try:
             self._regen_proc = subprocess.Popen(
@@ -326,22 +350,29 @@ class GraphsPage(QWidget):
             self._timer.start()
 
         except Exception as exc:
-            self._set_status(f"Error: {exc}", P.RED)
+            self._set_status(f"שגיאה: {exc}", P.RED)
 
     def _check_regen_done(self):
         if self._regen_proc and self._regen_proc.poll() is not None:
             self._timer.stop()
+            self._spinner.stop()
             rc = self._regen_proc.returncode
             if rc == 0:
                 self._load_html()
-                self._set_status("Graph updated", P.GREEN)
+                self._set_status("הגרף עודכן", P.GREEN)
             else:
-                self._set_status(f"Error (code {rc})", P.RED)
+                self._set_status(f"שגיאה (קוד {rc})", P.RED)
 
     def _set_status(self, msg: str, color: str = None):
         self._status_lbl.setText(msg)
         if color:
             self._status_lbl.setStyleSheet(
-                f"color:{color}; font-size:11px; border:none; "
-                f"direction:rtl; padding-top:4px;"
+                f"color:{color}; font-family:{P.FONT_STACK}; font-size:11px; border:none; "
+                f"padding-top:4px;"
             )
+
+    def reset_view(self):
+        """Called on re-entry: only clears a stuck spinner, never the loaded graph."""
+        busy = self._regen_proc is not None and self._regen_proc.poll() is None
+        if not busy:
+            self._spinner.stop()

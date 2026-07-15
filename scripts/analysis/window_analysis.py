@@ -39,6 +39,7 @@ Usage
 
 import argparse
 import sys
+import time
 from pathlib import Path
 
 import numpy as np
@@ -52,7 +53,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from sklearn.preprocessing import StandardScaler
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from shared.config import DB_DSN, EVENTS_TABLE, FEATURES_TABLE, CHANNEL_USERNAME
+from shared.config import DB_DSN, EVENTS_TABLE, FEATURES_TABLE, EXILENOVA_CHANNEL, RADAR_CHANNEL
 
 # ─────────────────────────────────────────────────────────────────────────────
 #  Settings
@@ -100,8 +101,12 @@ ATTACK_FEATURE_COLS = ["depth_score"]
 ALL_FEATURE_COLS    = DISCOURSE_COLS + ATTACK_FEATURE_COLS
 BASELINE_WINDOW     = 30   # days of history used for z-score baseline
 
-# Extended discourse: original 9 + derived Russia-domestic war signal
-DISCOURSE_COLS_EXT  = DISCOURSE_COLS + ["war_ru_internal"]
+# Radar (radarrussiia) — same 9-field schema, prefixed to keep it distinct from
+# exilenova_plus once both channels are merged into one row per day.
+RADAR_COLS = [f"radar_{c}" for c in DISCOURSE_COLS]
+
+# Extended discourse: original 9 + derived Russia-domestic war signal + radar channel
+DISCOURSE_COLS_EXT  = DISCOURSE_COLS + ["war_ru_internal"] + RADAR_COLS + ["radar_war_ru_internal"]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -134,24 +139,32 @@ def load_attacks(conn) -> pd.DataFrame:
     return pd.read_sql(sql, conn, parse_dates=["attack_date"])
 
 
-def load_discourse(conn) -> pd.DataFrame:
+def _load_channel_discourse(conn, channel: str, prefix: str = "") -> pd.DataFrame:
+    cols = ["pre_drone", "pre_airdef", "pre_airport", "pre_uncert",
+            "en_attack", "en_confirm", "en_refinery", "war_total", "war_ukr_ru"]
+    select_cols = ",\n            ".join(f"COALESCE({c}, 0) AS {prefix}{c}" for c in cols)
     sql = f"""
         SELECT
             feature_date,
-            COALESCE(pre_drone,   0) AS pre_drone,
-            COALESCE(pre_airdef,  0) AS pre_airdef,
-            COALESCE(pre_airport, 0) AS pre_airport,
-            COALESCE(pre_uncert,  0) AS pre_uncert,
-            COALESCE(en_attack,   0) AS en_attack,
-            COALESCE(en_confirm,  0) AS en_confirm,
-            COALESCE(en_refinery, 0) AS en_refinery,
-            COALESCE(war_total,   0) AS war_total,
-            COALESCE(war_ukr_ru,  0) AS war_ukr_ru
+            {select_cols}
         FROM {FEATURES_TABLE}
-        WHERE channel = '{CHANNEL_USERNAME}'
+        WHERE channel = '{channel}'
         ORDER BY feature_date
     """
     return pd.read_sql(sql, conn, parse_dates=["feature_date"])
+
+
+def load_discourse(conn) -> pd.DataFrame:
+    """
+    Merges exilenova_plus (after-the-fact OSINT discourse, unprefixed columns
+    for backward compatibility) with radarrussiia (tactical БПЛА radar alerts,
+    ``radar_`` prefix) into one row per day. Missing days on either side fill
+    to 0 rather than dropping the row.
+    """
+    exilenova = _load_channel_discourse(conn, EXILENOVA_CHANNEL)
+    radar     = _load_channel_discourse(conn, RADAR_CHANNEL, prefix="radar_")
+    merged = exilenova.merge(radar, on="feature_date", how="outer").fillna(0)
+    return merged.sort_values("feature_date").reset_index(drop=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -229,7 +242,7 @@ def build_full_daily(
     df = (
         full
         .merge(attacks_daily[attack_cols], on="date", how="left")
-        .merge(disc[["date"] + DISCOURSE_COLS], on="date", how="left")
+        .merge(disc[["date"] + DISCOURSE_COLS + RADAR_COLS], on="date", how="left")
         .fillna(0)
         .sort_values("date")
         .reset_index(drop=True)
@@ -249,6 +262,34 @@ def add_derived_discourse(df: pd.DataFrame) -> pd.DataFrame:
     if "war_total" in df.columns and "war_ukr_ru" in df.columns:
         df = df.copy()
         df["war_ru_internal"] = (df["war_total"] - df["war_ukr_ru"]).clip(lower=0)
+    if "radar_war_total" in df.columns and "radar_war_ukr_ru" in df.columns:
+        df = df.copy()
+        df["radar_war_ru_internal"] = (df["radar_war_total"] - df["radar_war_ukr_ru"]).clip(lower=0)
+    return df
+
+
+# Columns eligible for a trailing baseline — every raw attack-outcome column,
+# not just the ones currently reframed as above_baseline outcomes, so new
+# targets can adopt the same reframing later without new plumbing.
+_BASELINE_TARGET_COLS = ["attack_count", "significant", "depth_score"] + _EXTRA_ATTACK_COLS
+
+
+def add_rolling_baselines(df: pd.DataFrame, window: int = BASELINE_WINDOW) -> pd.DataFrame:
+    """
+    Add `{col}_roll{window}` = trailing mean of each attack-outcome column,
+    for every column in _BASELINE_TARGET_COLS present in df.
+
+    shift(1) before rolling means day D's baseline covers [D-window, D-1] —
+    it never includes day D itself, so the same column is safe to read both
+    as a label-side reference ("busier than the trailing baseline") and as
+    an input feature (a trend/escalation signal), with no leakage either way.
+    """
+    df = df.copy()
+    for col in _BASELINE_TARGET_COLS:
+        if col in df.columns:
+            df[f"{col}_roll{window}"] = (
+                df[col].shift(1).rolling(window, min_periods=10).mean()
+            )
     return df
 
 
@@ -272,6 +313,7 @@ def build_features(
     feature_cols: list[str],
     baseline_mean: pd.Series | None = None,
     baseline_std:  pd.Series | None = None,
+    attack_window: pd.DataFrame | None = None,
 ) -> tuple[np.ndarray, list[str]]:
     """
     Rich temporal feature vector from a discourse lookback window.
@@ -288,6 +330,15 @@ def build_features(
       pre_drone_x_en_attack — simultaneous multi-domain escalation (last day)
       sin_month / cos_month — cyclical month encoding (seasonal / weather proxy)
       is_heating_season     — 1 if Oct–Mar (energy attacks most economically damaging)
+
+    `attack_window`, if given, replaces `window` as the source for the
+    "Attack recurrence" block below (recent_attack_rate, days_since_last_attack,
+    attack_momentum, attack_trend_delta, attack_vs_baseline_delta). Callers pass
+    this at inference time when the attacks feed lags the discourse feed —
+    `window` still ends at "today" (discourse is current), but the recurrence
+    math needs to end at the true attack-data cutoff, or the unreviewed gap
+    reads as a sudden lull. Training never needs this: label masking already
+    keeps its windows from crossing that cutoff in the first place.
     """
     feature_cols = [c for c in feature_cols if c in window.columns]
     lb   = len(window)
@@ -354,20 +405,51 @@ def build_features(
         feat_vec.append(float(1 if month in {10, 11, 12, 1, 2, 3} else 0))
         feat_names.append("is_heating_season")
 
-    # Attack recurrence (from window's attack_count column)
-    if "attack_count" in window.columns:
-        atk = window["attack_count"].values.astype(float)
+    # Attack recurrence (from the attack window's attack_count column — this
+    # is `attack_window` when supplied, else the same `window` used above)
+    aw = attack_window if attack_window is not None else window
+    if "attack_count" in aw.columns:
+        atk   = aw["attack_count"].values.astype(float)
+        lb_aw = len(aw)
+        aw_weights = np.array([0.7 ** (lb_aw - 1 - k) for k in range(lb_aw)], dtype=float)
+        aw_weights /= aw_weights.sum()
+
         # Fraction of days with at least one attack in the window
         feat_vec.append(float((atk > 0).mean()))
         feat_names.append("recent_attack_rate")
-        # Days since last attack (0=yesterday was attacked, lb=none in window)
+        # Days since last attack (0=yesterday was attacked, lb_aw=none in window)
         last_idx = np.where(atk > 0)[0]
-        days_since = float(lb - last_idx[-1] - 1) if len(last_idx) > 0 else float(lb)
+        days_since = float(lb_aw - last_idx[-1] - 1) if len(last_idx) > 0 else float(lb_aw)
         feat_vec.append(days_since)
         feat_names.append("days_since_last_attack")
         # Recency-weighted attack momentum (same decay as discourse EWM)
-        feat_vec.append(float(np.dot(weights, atk)))
+        feat_vec.append(float(np.dot(aw_weights, atk)))
         feat_names.append("attack_momentum")
+
+        # Trend: split the lookback window in half and compare rates — is
+        # the pace picking up or easing off within this window itself.
+        if lb_aw >= 4:
+            mid = lb_aw // 2
+            early_rate  = float(atk[:mid].mean())
+            recent_rate = float(atk[mid:].mean())
+        else:
+            early_rate = recent_rate = float(atk.mean())
+        feat_vec.append(recent_rate - early_rate)
+        feat_names.append("attack_trend_delta")
+
+        # Escalation vs this target's own longer-term normal — same
+        # BASELINE_WINDOW-day trailing rate (from add_rolling_baselines())
+        # that the above_baseline outcome label is defined against, so a
+        # positive value here points the same direction as that label.
+        # Always appended (0.0 fallback pre-warm-up) — every row in a given
+        # (lookback, horizon) build must produce the same feature count, or
+        # pd.DataFrame(X_rows, columns=feat_names) breaks on shape mismatch.
+        baseline_col = f"attack_count_roll{BASELINE_WINDOW}"
+        baseline_rate = (
+            aw.iloc[-1][baseline_col] if baseline_col in aw.columns else float("nan")
+        )
+        feat_vec.append(float(atk.mean() - baseline_rate) if pd.notna(baseline_rate) else 0.0)
+        feat_names.append("attack_vs_baseline_delta")
 
     return np.array(feat_vec, dtype=float), feat_names
 
@@ -375,6 +457,198 @@ def build_features(
 # ─────────────────────────────────────────────────────────────────────────────
 #  Dataset builder
 # ─────────────────────────────────────────────────────────────────────────────
+
+# op definitions:
+#   gt0            → int(window_sum > 0)
+#   ge3            → int(window_max >= 3)
+#   sum_ge         → int(window_sum >= threshold)
+#   max_ge         → int(window_max >= threshold)
+#   above_baseline → int(window_sum > trailing_baseline_rate * horizon)
+#                    "busier than this target's own recent normal", not "did
+#                    anything happen at all" — stays non-degenerate even when
+#                    the raw event is frequent (see [[project_attack_forecast]]
+#                    on why gt0 saturates for high-base-rate targets).
+def _compute_outcome(df: pd.DataFrame, i: int, horizon: int, outcome: dict) -> float:
+    """Reduce the horizon window starting at row i to a single outcome value."""
+    future_slice = df.iloc[i : i + horizon]
+    col = outcome["col"]
+    op  = outcome["op"]
+    if col not in future_slice.columns:
+        return 0.0
+    if op == "gt0":
+        return float(future_slice[col].sum() > 0)
+    if op == "ge3":
+        return float(future_slice[col].max() >= 3)
+    if op == "sum_ge":
+        return float(future_slice[col].sum() >= outcome.get("threshold", 1))
+    if op == "max_ge":
+        return float(future_slice[col].max() >= outcome.get("threshold", 1))
+    if op == "above_baseline":
+        baseline_col = f"{col}_roll{BASELINE_WINDOW}"
+        if baseline_col not in df.columns:
+            return 0.0
+        baseline_rate = df.iloc[i][baseline_col]
+        if pd.isna(baseline_rate):
+            return 0.0
+        expected = baseline_rate * horizon
+        return float(future_slice[col].sum() > expected)
+    # Legacy ops kept for backward compatibility
+    if op == "sum":
+        return float(future_slice[col].sum())
+    if op == "max":
+        return float(future_slice[col].max())
+    raise ValueError(f"Unknown op: {op!r}")
+
+
+def build_multi_features(
+    df: pd.DataFrame,
+    lookback: int,
+    horizon: int,
+    rolling_means: pd.DataFrame | None = None,
+    rolling_stds: pd.DataFrame | None = None,
+    max_label_date=None,
+) -> tuple[pd.DataFrame, list[int], list]:
+    """
+    Build the feature matrix X for one (lookback, horizon) pair, independent
+    of outcome. The label (y) depends on the outcome; the features do not —
+    so this is the piece that should be computed once and reused across every
+    outcome sharing the same (lookback, horizon), instead of rebuilt from
+    scratch per outcome (this per-day loop, incl. np.polyfit, is the most
+    expensive part of the pipeline).
+
+    `max_label_date`, if given, caps how far the label window [D, D+horizon-1]
+    may reach: rows whose outcome window would extend past it are dropped.
+    Attack tracking can fall behind discourse ingestion (nobody's reviewed new
+    attack_events in months, say), and df's date spine is sized off whichever
+    of attacks/discourse runs later — so without this, days beyond the last
+    reviewed attack date look like "confirmed zero attacks" (fillna(0) in
+    build_full_daily) instead of "not yet reviewed", silently manufacturing
+    false-negative labels. Discourse features themselves are unaffected —
+    only how far forward we're willing to trust the label.
+
+    Returns (X, row_indices, dates) where row_indices[k] is the position in
+    `df` that row k of X was built from — feed into labels_for_indices() to
+    get y for any outcome at this same (lookback, horizon).
+    """
+    disc_cols = [c for c in DISCOURSE_COLS_EXT if c in df.columns]
+    if rolling_means is None or rolling_stds is None:
+        rolling_means, rolling_stds = _compute_rolling_stats(df, disc_cols)
+
+    X_rows, row_indices, dates = [], [], []
+    feat_names = None
+    n = len(df)
+    if max_label_date is not None:
+        labeled = df.index[df["date"] <= max_label_date]
+        n = min(n, int(labeled.max()) + 1) if len(labeled) else lookback
+
+    for i in range(lookback, n - horizon + 1):
+        window = df.iloc[i - lookback : i]
+        bm = rolling_means.iloc[i - 1]
+        bs = rolling_stds.iloc[i - 1]
+        x, names = build_features(window, disc_cols, bm, bs)
+        if feat_names is None:
+            feat_names = names
+        X_rows.append(x)
+        row_indices.append(i)
+        dates.append(df.iloc[i]["date"])
+
+    X = pd.DataFrame(X_rows, columns=feat_names or [])
+    return X, row_indices, dates
+
+
+def labels_for_indices(
+    df: pd.DataFrame, row_indices: list[int], horizon: int, outcome: dict,
+) -> pd.Series:
+    """y = outcome over [D, D+horizon-1] for each row index from build_multi_features()."""
+    y_rows = [_compute_outcome(df, i, horizon, outcome) for i in row_indices]
+    return pd.Series(y_rows, name=outcome["name"])
+
+
+class FeatureCache:
+    """
+    Caches build_multi_features() results per (lookback, horizon) for one df.
+    Grid search and training both try many outcomes against the same set of
+    (lookback, horizon) pairs; without this cache, the expensive per-day
+    feature loop was rebuilt from scratch for every single outcome (~17x more
+    work than necessary). Rolling baseline stats are likewise computed once.
+    """
+
+    def __init__(self, df: pd.DataFrame, max_label_date=None):
+        self._df = df
+        self._max_label_date = max_label_date
+        disc_cols = [c for c in DISCOURSE_COLS_EXT if c in df.columns]
+        self._rolling_means, self._rolling_stds = _compute_rolling_stats(df, disc_cols)
+        self._cache: dict[tuple[int, int], tuple[pd.DataFrame, list[int], list]] = {}
+
+    def get(self, lookback: int, horizon: int) -> tuple[pd.DataFrame, list[int], list]:
+        key = (lookback, horizon)
+        if key not in self._cache:
+            self._cache[key] = build_multi_features(
+                self._df, lookback, horizon,
+                rolling_means=self._rolling_means, rolling_stds=self._rolling_stds,
+                max_label_date=self._max_label_date,
+            )
+        return self._cache[key]
+
+    def dataset(
+        self, lookback: int, horizon: int, outcome: dict, return_dates: bool = False,
+    ) -> tuple[pd.DataFrame, pd.Series] | tuple[pd.DataFrame, pd.Series, list]:
+        X, row_indices, dates = self.get(lookback, horizon)
+        y = labels_for_indices(self._df, row_indices, horizon, outcome)
+        if return_dates:
+            return X, y, dates
+        return X, y
+
+
+def make_throttled_progress(cb, min_interval: float = 0.05):
+    """
+    Wrap a progress callback so it fires at most ~1/min_interval times/sec.
+    Always passes through the first event and the final (step == total) event
+    per call, so the UI never looks stuck at 0% or falls short of 100% even
+    though most intermediate steps get dropped.
+    """
+    if cb is None:
+        return None
+    state = {"last": 0.0}
+
+    def _wrapped(ev: dict):
+        now = time.monotonic()
+        # "milestone" events (a target's best score just improved, a diagnostic
+        # decision was made, a model finished training) are always let through
+        # regardless of rate — they're the "interesting results" the live log
+        # is built around, unlike the high-frequency per-combo scan events.
+        is_edge = ev.get("step") in (1, ev.get("total")) or ev.get("milestone")
+        if is_edge or (now - state["last"]) >= min_interval:
+            state["last"] = now
+            cb(ev)
+
+    return _wrapped
+
+
+def build_multi_dataset(
+    df: pd.DataFrame,
+    lookback: int,
+    horizon: int,
+    outcome: dict,
+    return_dates: bool = False,
+    max_label_date=None,
+) -> tuple[pd.DataFrame, pd.Series] | tuple[pd.DataFrame, pd.Series, list]:
+    """X = temporal discourse features over [D-lookback, D-1], y = outcome over [D, D+horizon-1]."""
+    X, row_indices, dates = build_multi_features(df, lookback, horizon, max_label_date=max_label_date)
+    y = labels_for_indices(df, row_indices, horizon, outcome)
+    if return_dates:
+        return X, y, dates
+    return X, y
+
+
+# Outcome specs for the two legacy baseline targets, kept so build_dataset's
+# simple (df, lookback, horizon, target=...) signature still works for callers
+# (e.g. regime_models.py) that don't need the full outcome-dict interface.
+_LEGACY_OUTCOMES = {
+    "any_attack":  {"name": "any_attack",  "col": "attack_count", "type": "binary", "op": "gt0"},
+    "significant": {"name": "significant", "col": "significant",  "type": "binary", "op": "gt0"},
+}
+
 
 def build_dataset(
     df: pd.DataFrame,
@@ -390,33 +664,8 @@ def build_dataset(
       "significant" — 1 if any significant event in horizon window
     """
     df = add_derived_discourse(df)
-    disc_cols = [c for c in DISCOURSE_COLS_EXT if c in df.columns]
-    rolling_means, rolling_stds = _compute_rolling_stats(df, disc_cols)
-
-    X_rows, y_rows, dates = [], [], []
-    feat_names = None
-    n = len(df)
-
-    for i in range(lookback, n - horizon + 1):
-        window = df.iloc[i - lookback : i]
-        future = df.iloc[i : i + horizon]
-        bm = rolling_means.iloc[i - 1]
-        bs = rolling_stds.iloc[i - 1]
-
-        x, names = build_features(window, disc_cols, bm, bs)
-        if feat_names is None:
-            feat_names = names
-        X_rows.append(x)
-
-        if target == "any_attack":
-            y_rows.append(int(future["attack_count"].sum() > 0))
-        else:
-            y_rows.append(int(future["significant"].sum() > 0))
-        dates.append(df.iloc[i]["date"])
-
-    X = pd.DataFrame(X_rows, columns=feat_names or [])
-    y = pd.Series(y_rows, name=f"{target}_h{horizon}")
-    return X, y, dates
+    outcome = _LEGACY_OUTCOMES[target]
+    return build_multi_dataset(df, lookback, horizon, outcome, return_dates=True)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -518,7 +767,7 @@ def phase1_crosscorr(df: pd.DataFrame, out_dir: Path) -> pd.DataFrame:
     attack_sig = df["attack_count"].values.astype(float)
     rows = []
 
-    for feat in DISCOURSE_COLS:
+    for feat in DISCOURSE_COLS + RADAR_COLS:
         feat_sig = df[feat].values.astype(float)
         for lag in range(-MAX_LAG, MAX_LAG + 1):
             if lag == 0:
@@ -543,7 +792,7 @@ def phase1_crosscorr(df: pd.DataFrame, out_dir: Path) -> pd.DataFrame:
     # Print peak positive lags per feature
     print(f"\n  {'Feature':<20}  {'Best lag (d)':<14}  {'Pearson r':>10}")
     print(f"  {'-'*20}  {'-'*14}  {'-'*10}")
-    for feat in DISCOURSE_COLS:
+    for feat in DISCOURSE_COLS + RADAR_COLS:
         sub = ccf[(ccf["feature"] == feat) & (ccf["lag"] > 0)]
         if sub.empty or sub["pearson_r"].isna().all():
             print(f"  {feat:<20}  {'—':>14}  {'—':>10}")

@@ -8,8 +8,8 @@ def build_client():
     return TelegramClient(SESSION_NAME, API_ID, API_HASH)
 
 
-async def iter_messages(client, start_dt_utc, end_dt_utc_exclusive):
-    entity = await client.get_entity(CHANNEL_USERNAME)
+async def iter_messages(client, start_dt_utc, end_dt_utc_exclusive, channel=CHANNEL_USERNAME):
+    entity = await client.get_entity(channel)
 
     # Subtract 1 s so Telethon's offset_date binary search doesn't land
     # just past the boundary and miss the first few real messages.
