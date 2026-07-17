@@ -5,10 +5,11 @@ Sections:
   0. Home     — navigation hub
   1. Help     — plain-language explanation of the app
   2. Attacks  — fetch from Telegram, parse, review & save
-  3. Discourse — run daily feature extractor
-  4. Graphs   — open Plotly timeline in browser
-  5. Predict  — model training / forecasting
-  6. Story    — plain-language model insights
+  3. Map      — every attack plotted on a Russia/Ukraine map
+  4. Discourse — run daily feature extractor
+  5. Graphs   — open Plotly timeline in browser
+  6. Predict  — model training / forecasting
+  7. Story    — plain-language model insights
 
 Usage:
     python gmar_app/main.py
@@ -44,6 +45,7 @@ from gmar_app.ui.help import HelpPage
 from gmar_app.ui.attacks import AttacksPage
 from gmar_app.ui.discourse import DiscoursePage
 from gmar_app.ui.graphs import GraphsPage
+from gmar_app.ui.map_page import MapPage
 from gmar_app.ui.predictions import PredictionsPage
 from gmar_app.ui.story import StoryPage
 
@@ -311,6 +313,7 @@ if __name__ == "__main__":
     attacks_page      = AttacksPage()
     discourse_page    = DiscoursePage()
     graphs_page       = GraphsPage()
+    map_page          = MapPage()
     predictions_page  = PredictionsPage()
     story_page        = StoryPage()
 
@@ -319,6 +322,7 @@ if __name__ == "__main__":
         ("🏠", "בית",     home_page),
         ("💡", "עזרה",    help_page),
         ("⚡", "תקיפות",  attacks_page),
+        ("🗺", "מפה",     map_page),
         ("📡", "שיח",     discourse_page),
         ("📊", "גרפים",   graphs_page),
         ("🤖", "תחזיות",  predictions_page),
@@ -334,9 +338,9 @@ if __name__ == "__main__":
 
     home_page.set_nav(
         attacks=_navigate_to_attacks,
-        discourse=lambda: win.switch_to(3),
-        graphs=lambda: win.switch_to(4),
-        predictions=lambda: win.switch_to(5),
+        discourse=lambda: win.switch_to(4),
+        graphs=lambda: win.switch_to(5),
+        predictions=lambda: win.switch_to(6),
     )
 
     # ── Async event loop ─────────────────────────────────────────────────────

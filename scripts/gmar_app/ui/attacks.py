@@ -54,14 +54,14 @@ AREA_OPTIONS = sorted({
     "Almetyevsk", "Naberezhnye Chelny", "Nizhnekamsk",
     "Orenburg", "Perm", "Izhevsk", "Volgograd",
     # Sverdlovsk / Tyumen
-    "Ekaterinburg", "Sverdlovsk Oblast", "Tyumen Oblast",
+    "Ekaterinburg", "Sverdlovsk Oblast", "Tyumen Oblast", "Omsk",
     # Khanty-Mansi
     "Khanty-Mansi Autonomous Okrug", "Surgut", "Nizhnevartovsk",
     # South Russia
     "Krasnodar", "Tuapse", "Novorossiysk", "Gay-Kodzor", "Rostov",
-    "Novoshakhtinsk", "Chertkovo", "Astrakhan",
+    "Novoshakhtinsk", "Chertkovo", "Astrakhan", "Dagestan",
     # North / Northwest
-    "Leningrad Oblast", "Kirishi", "Pskov", "Murmansk", "Vologda",
+    "Leningrad Oblast", "Kirishi", "Pskov", "Murmansk", "Vologda", "Komi Republic",
     # Central Black Earth
     "Kursk", "Belgorod",
     # Tver / North Central
@@ -85,7 +85,7 @@ AREA_OPTIONS = sorted({
     "Central Russia", "Western Russia", "Southern Russia",
     "Northern Russia", "Eastern Russia", "Far East Russia",
     "Siberia", "Ural", "European Russia",
-    "Central Federal District", "Black Sea Region",
+    "Central Federal District", "Black Sea Region", "Caspian Sea",
     "Russia", "Occupied Territories",
 
     # ── Unknown ───────────────────────────────────────────────────────────────

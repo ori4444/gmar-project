@@ -473,6 +473,21 @@ def fetch_attack_by_id(conn, record_id: int) -> dict | None:
     return dict(row) if row else None
 
 
+def fetch_all_attacks_for_map(conn) -> list[dict]:
+    """All active events with full detail fields, for the attacks map page."""
+    with conn.cursor() as cur:
+        cur.execute(
+            f"""
+            {_EVENT_SELECT}
+            WHERE e.status = 'active'
+            {_EVENT_GROUP}
+            ORDER BY e.attack_date
+            """
+        )
+        rows = cur.fetchall()
+    return [dict(r) for r in rows]
+
+
 def fetch_recent_attacks(conn, limit: int = 5) -> list[dict]:
     with conn.cursor() as cur:
         cur.execute(

@@ -16,6 +16,7 @@ from telegram_attacks.db import (  # noqa: F401
     insert_attack,
     fetch_attack_by_id,
     fetch_recent_attacks,
+    fetch_all_attacks_for_map,
     build_updated_record,
     diff_update_fields,
     update_attack,
