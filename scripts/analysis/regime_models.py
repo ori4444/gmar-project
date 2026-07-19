@@ -370,7 +370,7 @@ class RegimeModelBank:
 
             bundle = self.models[key]
 
-            X_all, _, _ = build_dataset(df.tail(lb + 30).reset_index(drop=True), lb, h, target=target)
+            X_all, _, _ = build_dataset(df.tail(lb + REGIME_ROLL).reset_index(drop=True), lb, h, target=target)
             if X_all.empty:
                 out.append({**cfg, "error": "build_dataset returned empty"})
                 continue

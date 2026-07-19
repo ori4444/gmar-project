@@ -288,6 +288,7 @@ class StoryPage(QWidget):
 
     def reset_view(self):
         if not self._busy:
+            self._busy = True
             asyncio.ensure_future(self._load_async())
 
     def _setup_ui(self):
@@ -346,10 +347,10 @@ class StoryPage(QWidget):
 
     def _on_refresh(self):
         if not self._busy:
+            self._busy = True
             asyncio.ensure_future(self._load_async())
 
     async def _load_async(self):
-        self._busy = True
         self._refresh_btn.setEnabled(False)
         self._status_lbl.setText("טוען תובנות... 🧠")
         self._status_lbl.setStyleSheet(f"color:{P.TXT3}; font-size:12px; border:none;")

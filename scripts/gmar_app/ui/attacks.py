@@ -371,6 +371,7 @@ class AttacksPage(QWidget):
         self._decision_future: asyncio.Future | None = None
         self._start_future: asyncio.Future | None = None
         self._current_parsed = None
+        self._current_diffs = None
         self._action = None
         self._counter = 0
         self._manual_update_target: dict | None = None
@@ -1113,6 +1114,11 @@ class AttacksPage(QWidget):
         """Return the manually selected existing attack record (or None)."""
         return self._manual_update_target
 
+    def get_action(self) -> str:
+        """Current INSERT/UPDATE mode, reflecting any '↕ switch' toggle the
+        reviewer made since the candidate was loaded."""
+        return self._action
+
     def set_status(self, msg: str):
         self._loading_overlay.set_message(msg)
 
@@ -1187,6 +1193,7 @@ class AttacksPage(QWidget):
     ):
         self._loading_overlay.stop()
         self._current_parsed = deepcopy(parsed)
+        self._current_diffs = diffs
         self._action = action
         self._counter = counter
         self._manual_update_target = None
@@ -1349,7 +1356,7 @@ class AttacksPage(QWidget):
                 parsed=self._current_parsed,
                 original_text=self._orig_edit.toPlainText(),
                 translated_text=self._trans_edit.toPlainText(),
-                diffs=None,
+                diffs=self._current_diffs,
                 counter=self._counter,
             )
 

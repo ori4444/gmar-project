@@ -43,7 +43,7 @@ def _compute_confidence(
 ) -> int:
     score = 50
     if report_type == "official_confirmation":   score += 25
-    elif report_type == "direct_report":         score += 10
+    elif report_type == "indirect_aftermath":    score += 10
     elif report_type == "hearsay":               score -= 5
     elif report_type == "correction_update":     score += 5
     if hit_confirmed:    score += 8
@@ -64,7 +64,7 @@ def _signal_score(p: ParsedEvent) -> int:
     if p.primary_attack:     score += 2
     if p.air_defense_active: score += 1
     score += {"high": 3, "medium": 2, "low": 1}.get(p.damage_level, 0)
-    score += {"official_confirmation": 2, "direct_report": 1}.get(p.report_type, 0)
+    score += {"official_confirmation": 2, "indirect_aftermath": 1}.get(p.report_type, 0)
     return score
 
 

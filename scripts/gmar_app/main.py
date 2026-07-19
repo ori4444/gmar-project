@@ -214,6 +214,10 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
 
             action_code, edited_parsed = await page.async_wait_for_decision()
             c["last_edited"] = edited_parsed
+            # Re-read the live action: the reviewer may have hit "↕ switch to
+            # insert/update" after load_candidate() ran, which display_action
+            # (computed before the wait) would not reflect.
+            current_action = page.get_action()
 
             if action_code == "back":
                 cursor -= 2  # loop adds +1 at top
@@ -246,7 +250,7 @@ async def run_attacks(mode: str, start_date, end_date, page: AttacksPage):
                                 page.append_log(f"#{cursor + 1}: עודכן")
                             else:
                                 page.append_log(f"#{cursor + 1}: אין שינויים")
-                    elif display_action == "UPDATE":
+                    elif current_action == "UPDATE":
                         merged = build_updated_record(display_existing, edited_parsed.to_db_dict(c["text"]))
                         diffs2 = diff_update_fields(display_existing, merged)
                         if diffs2:

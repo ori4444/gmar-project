@@ -100,6 +100,25 @@ def _multipolygon_xy(polygons: list) -> tuple[list, list]:
     return xs, ys
 
 
+# Default viewport — Ukraine + the western/central Russian theater where the
+# vast majority of attacks happen. Widened per-render (see _view_range) so a
+# real attack somewhere outside this box (e.g. Far East, Siberia) is never
+# silently cropped out of the initial view.
+_DEFAULT_X_RANGE = [18, 72]
+_DEFAULT_Y_RANGE = [42, 64]
+_RANGE_PADDING = 2  # degrees of breathing room around out-of-box points
+
+
+def _view_range(points: list[dict]) -> tuple[list, list]:
+    lons = [p["lon"] for p in points]
+    lats = [p["lat"] for p in points]
+    x_min = min([_DEFAULT_X_RANGE[0]] + [l - _RANGE_PADDING for l in lons])
+    x_max = max([_DEFAULT_X_RANGE[1]] + [l + _RANGE_PADDING for l in lons])
+    y_min = min([_DEFAULT_Y_RANGE[0]] + [l - _RANGE_PADDING for l in lats])
+    y_max = max([_DEFAULT_Y_RANGE[1]] + [l + _RANGE_PADDING for l in lats])
+    return [x_min, x_max], [y_min, y_max]
+
+
 def build_points(rows: list[dict]) -> list[dict]:
     points = []
     for row in rows:
@@ -454,17 +473,19 @@ def main():
         showlegend=False,
     ))
 
+    x_range, y_range = _view_range(points)
+
     fig.update_layout(
         paper_bgcolor="#0a0b0d",
         plot_bgcolor="#0a0b0d",
         margin=dict(l=0, r=0, t=0, b=0),
         dragmode="pan",
         xaxis=dict(
-            visible=False, range=[18, 72],
+            visible=False, range=x_range,
             showgrid=False, zeroline=False,
         ),
         yaxis=dict(
-            visible=False, range=[42, 64],
+            visible=False, range=y_range,
             showgrid=False, zeroline=False,
             scaleanchor="x", scaleratio=1.66,  # ~1/cos(53°N) — roughly true-proportioned at this latitude
         ),

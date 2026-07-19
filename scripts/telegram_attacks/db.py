@@ -105,6 +105,20 @@ CREATE TABLE IF NOT EXISTS {FEATURES_TABLE} (
 # Severity ranking for merge decisions
 DAMAGE_RANK = {"low": 1, "medium": 2, "high": 3, "catastrophic": 4}
 
+# Drone-count ranking for merge decisions (mirrors infer_drone_scale's
+# numeric thresholds) — a later report naming a bigger wave should win,
+# not just fill in a previously-empty value.
+DRONE_SCALE_RANK = {"few": 1, "swarm": 2, "massive": 3}
+
+# Reliability ranking for merge decisions — higher wins when merging an
+# update into an existing event (mirrors the point values in _compute_confidence).
+REPORT_TYPE_RANK = {
+    "hearsay": 1,
+    "indirect_aftermath": 2,
+    "correction_update": 3,
+    "official_confirmation": 4,
+}
+
 # SELECT fragment that returns compat column names matching old 'attacks' schema
 _EVENT_SELECT = f"""
     SELECT
@@ -147,6 +161,8 @@ TRACKED = [
     "hit_confirmed",
     "damage_level",
     "confidence",
+    "drone_scale",
+    "report_type",
 ]
 
 # Compat → actual column mapping for UPDATE SET clauses
@@ -219,7 +235,7 @@ def _compute_confidence(data: dict) -> int:
     score = 50
     rt = (data.get("report_type") or "hearsay").lower()
     if rt == "official_confirmation":   score += 25
-    elif rt == "direct_report":         score += 10
+    elif rt == "indirect_aftermath":    score += 10
     elif rt == "hearsay":               score -= 5
     elif rt == "correction_update":     score += 5
     if data.get("hit_confirmed"):       score += 8
@@ -529,7 +545,9 @@ def build_updated_record(existing: dict, data: dict) -> dict:
         "area":               area,
         "target_type":        target_type,
         "combined_strike":    bool(existing.get("combined_strike") or data.get("combined_strike")),
-        "drone_scale":        existing.get("drone_scale") or data.get("drone_scale"),
+        "drone_scale":        _pick_better(
+            existing.get("drone_scale"), data.get("drone_scale"), DRONE_SCALE_RANK
+        ),
         "air_defense_active": bool(
             existing.get("air_defense_active") or data.get("air_defense_active")
         ),
@@ -543,7 +561,9 @@ def build_updated_record(existing: dict, data: dict) -> dict:
         "damage_level":       _pick_better(
             existing.get("damage_level"), data.get("damage_level"), DAMAGE_RANK
         ),
-        "report_type":        existing.get("report_type"),
+        "report_type":        _pick_better(
+            existing.get("report_type"), data.get("report_type"), REPORT_TYPE_RANK
+        ),
         "confidence":         max(int(existing.get("confidence") or 50), new_confidence),
         "source": (
             (existing.get("source") or "")

@@ -161,6 +161,7 @@ MACRO_REGIONS: dict[str, str] = {
     "Perm":               "Volga Region",
     # Siberia
     "Kemerovo":           "Siberia",
+    "Omsk":               "Siberia",
     # Central Russia
     "Moscow Oblast":      "Central Russia",
     "Tula":               "Central Russia",
@@ -194,12 +195,14 @@ MACRO_REGIONS: dict[str, str] = {
     "Chertkovo":          "Southern Russia",
     "Astrakhan":          "Southern Russia",
     "Volgograd":          "Southern Russia",
+    "Dagestan":           "Southern Russia",
     # Northwest Russia
     "Leningrad Oblast":   "Northwest Russia",
     "Kirishi":            "Northwest Russia",
     "Pskov":              "Northwest Russia",
     "Murmansk":           "Northwest Russia",
     "Vologda":            "Northwest Russia",
+    "Komi Republic":      "Northwest Russia",
     # Ural
     "Sverdlovsk Oblast":             "Ural",
     "Tyumen Oblast":                 "Ural",
