@@ -42,6 +42,21 @@ DMG_COLORS = {
 DEFAULT_COLOR = "#6b7280"
 APPROX_COLOR = "#9297a3"
 
+# Areas matching detectors.MACRO_REGIONS' "Occupied Territories" bucket —
+# drawn as diamonds instead of circles so they're visually distinct from
+# both the Russia and Ukraine polygons.
+OCCUPIED_AREAS = {
+    "Crimea", "Occupied Crimea", "Zaporizhzhia Oblast",
+    "Luhansk Oblast", "Occupied Kherson", "Occupied Donetsk",
+}
+OCCUPIED_MARKER_LINE = "#FFC857"
+
+
+def _is_occupied(area, macro_region) -> bool:
+    if macro_region == "Occupied Territories":
+        return True
+    return (area or "").strip() in OCCUPIED_AREAS
+
 _FIELD_LABELS = [
     ("area", "Area"),
     ("attack_date", "Date"),
@@ -128,13 +143,21 @@ def build_points(rows: list[dict]) -> list[dict]:
         color = DMG_COLORS.get((row.get("damage_level") or "").lower(), DEFAULT_COLOR)
         if not exact:
             color = APPROX_COLOR
+        occupied = _is_occupied(row.get("area"), row.get("macro_region"))
         points.append({
             "lat": lat,
             "lon": lon,
             "date": date_str,
             "text": f'{row.get("area")} — {date_str}',
             "color": color,
+            "symbol": "diamond" if occupied else "circle",
+            "line_color": OCCUPIED_MARKER_LINE if occupied else "white",
+            "line_width": 2 if occupied else 1,
             "detail": _detail_html(row, exact),
+            "area": row.get("area"),
+            "attack_id": row.get("attack_id"),
+            "target_type": row.get("target_type"),
+            "hit_confirmed": bool(row.get("hit_confirmed")),
         })
     return points
 
@@ -219,6 +242,19 @@ _HTML_TEMPLATE = """\
   .d-k {{ color: #9297a3; }}
   .d-v {{ color: #eef0f3; font-weight: 600; text-align: end; }}
   .d-note {{ margin-top: 8px; color: #F5A623; font-size: 11px; }}
+  .d-list {{ max-height: 320px; overflow-y: auto; margin-top: 4px; }}
+  .d-list-row {{ display: flex; align-items: center; gap: 8px; padding: 6px 2px;
+                border-bottom: 1px solid rgba(255,255,255,0.06); cursor: pointer; }}
+  .d-list-row:hover {{ background: rgba(255,255,255,0.05); }}
+  .d-dot {{ width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }}
+  .d-list-date {{ color: #eef0f3; font-size: 11px; font-weight: 600; }}
+  .d-list-target {{ color: #9297a3; font-size: 11px; flex: 1; overflow: hidden;
+                    text-overflow: ellipsis; white-space: nowrap; }}
+  .d-list-hit {{ color: #3DDC84; font-size: 11px; }}
+  .d-back {{ color: #5E6AD2; font-size: 11px; font-weight: 700; cursor: pointer;
+            margin-bottom: 8px; padding-bottom: 6px;
+            border-bottom: 1px solid rgba(255,255,255,0.08); }}
+  .d-back:hover {{ color: #7b85e0; }}
 </style>
 </head>
 <body>
@@ -262,18 +298,108 @@ _HTML_TEMPLATE = """\
 
   var ATTACKS_TRACE = 2;  // 0=Russia outline, 1=Ukraine outline, 2=attack markers
 
+  // Mirrors DMG_COLORS / DEFAULT_COLOR / APPROX_COLOR in the Python source —
+  // used to pick the worst-severity color to represent a stack of attacks.
+  var SEVERITY_RANK = {{ '#3DDC84': 1, '#F5A623': 2, '#F0555A': 3, '#6b7280': 0, '#9297a3': -1 }};
+
+  function markerSize(count) {{
+    if (count <= 1) return 9;
+    return Math.min(9 + 5 * Math.sqrt(count - 1), 26);
+  }}
+
+  function escapeHtml(s) {{
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function(c) {{
+      return {{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c];
+    }});
+  }}
+
+  // Groups the (already date-filtered) points by exact coordinate — every
+  // attack recorded against the same named area shares one static centroid
+  // (see shared/area_coords.py), so many attacks land on the identical
+  // (lat, lon). Re-run on every render() so a stack always reflects
+  // whatever date range is currently applied.
+  function groupByLocation(points) {{
+    var groups = {{}}, order = [];
+    points.forEach(function(p) {{
+      var key = p.lon + ',' + p.lat;
+      if (!groups[key]) {{ groups[key] = []; order.push(key); }}
+      groups[key].push(p);
+    }});
+    return order.map(function(key) {{
+      var items = groups[key].slice().sort(function(a, b) {{
+        return a.date < b.date ? 1 : (a.date > b.date ? -1 : 0);  // date desc
+      }});
+      // Different area names can share a coordinate (e.g. Crimea / Occupied
+      // Crimea) — don't assume symbol/outline are uniform across the group,
+      // derive a representative defensively instead.
+      var rep = items.find(function(p) {{ return p.symbol === 'diamond'; }}) || items[0];
+      var worst = items.reduce(function(best, p) {{
+        return (SEVERITY_RANK[p.color] || 0) > (SEVERITY_RANK[best.color] || 0) ? p : best;
+      }}, items[0]);
+      return {{
+        lon: items[0].lon, lat: items[0].lat, items: items, count: items.length,
+        area: items[0].area, color: worst.color, symbol: rep.symbol,
+        line_color: rep.line_color, line_width: rep.line_width,
+        hoverText: items.length === 1 ? items[0].text
+                                       : (items[0].area + ' — ' + items.length + ' תקיפות'),
+        badgeText: items.length > 1 ? String(items.length) : '',
+        size: markerSize(items.length),
+      }};
+    }});
+  }}
+
   function render(points) {{
     var gd = document.getElementById('chart');
-    var x = points.map(function(p) {{ return p.lon; }});
-    var y = points.map(function(p) {{ return p.lat; }});
-    var text = points.map(function(p) {{ return p.text; }});
-    var colors = points.map(function(p) {{ return p.color; }});
-    var detail = points.map(function(p) {{ return p.detail; }});
+    var groups = groupByLocation(points);
+    var x = groups.map(function(g) {{ return g.lon; }});
+    var y = groups.map(function(g) {{ return g.lat; }});
+    var text = groups.map(function(g) {{ return g.badgeText; }});
+    var hovertext = groups.map(function(g) {{ return g.hoverText; }});
+    var colors = groups.map(function(g) {{ return g.color; }});
+    var symbols = groups.map(function(g) {{ return g.symbol; }});
+    var lineColors = groups.map(function(g) {{ return g.line_color; }});
+    var lineWidths = groups.map(function(g) {{ return g.line_width; }});
+    var sizes = groups.map(function(g) {{ return g.size; }});
+    var customdata = groups.map(function(g) {{ return g.items; }});
     Plotly.restyle(gd, {{
-      x: [x], y: [y], text: [text],
-      'marker.color': [colors], customdata: [detail],
+      x: [x], y: [y], text: [text], hovertext: [hovertext],
+      'marker.color': [colors], 'marker.symbol': [symbols],
+      'marker.line.color': [lineColors], 'marker.line.width': [lineWidths],
+      'marker.size': [sizes], customdata: [customdata],
     }}, [ATTACKS_TRACE]);
-    document.getElementById('count').textContent = points.length + ' תקיפות מוצגות';
+    document.getElementById('count').textContent =
+      points.length + ' תקיפות מוצגות ב-' + groups.length + ' מוקדים';
+  }}
+
+  function showDetail(html) {{
+    document.getElementById('detail-body').innerHTML = html;
+    document.getElementById('detail').style.display = 'block';
+  }}
+
+  function showList(items) {{
+    var header = '<div class="d-title">' + escapeHtml(items[0].area)
+      + ' — ' + items.length + ' תקיפות</div>';
+    var rows = items.map(function(item, idx) {{
+      return '<div class="d-list-row" data-idx="' + idx + '">'
+        + '<span class="d-dot" style="background:' + item.color + '"></span>'
+        + '<span class="d-list-date">' + item.date + '</span>'
+        + '<span class="d-list-target">' + escapeHtml(item.target_type || '') + '</span>'
+        + (item.hit_confirmed ? '<span class="d-list-hit">✓</span>' : '')
+        + '</div>';
+    }}).join('');
+    document.getElementById('detail-body').innerHTML = header + '<div class="d-list">' + rows + '</div>';
+    document.getElementById('detail').style.display = 'block';
+    document.querySelectorAll('.d-list-row').forEach(function(rowEl) {{
+      rowEl.addEventListener('click', function() {{
+        showDetailFromList(items, parseInt(rowEl.getAttribute('data-idx'), 10));
+      }});
+    }});
+  }}
+
+  function showDetailFromList(items, idx) {{
+    var back = '<div class="d-back" id="dBack">→ בחזרה לרשימה (' + items.length + ')</div>';
+    document.getElementById('detail-body').innerHTML = back + items[idx].detail;
+    document.getElementById('dBack').addEventListener('click', function() {{ showList(items); }});
   }}
 
   var filterFrom = null;   // ISO 'yyyy-mm-dd' or null (no lower bound)
@@ -404,9 +530,9 @@ _HTML_TEMPLATE = """\
     render(ALL_POINTS);
     gd.on('plotly_click', function(data) {{
       if (!data.points.length) return;
-      var html = data.points[0].customdata;
-      document.getElementById('detail-body').innerHTML = html;
-      document.getElementById('detail').style.display = 'block';
+      var items = data.points[0].customdata;
+      if (items.length === 1) {{ showDetail(items[0].detail); }}
+      else {{ showList(items); }}
     }});
     function resize() {{
       var mapDiv = document.getElementById('map');
@@ -460,16 +586,23 @@ def main():
     fig.add_trace(go.Scatter(
         x=[p["lon"] for p in points],
         y=[p["lat"] for p in points],
-        text=[p["text"] for p in points],
-        mode="markers",
+        text=["" for _ in points],
+        hovertext=[p["text"] for p in points],
+        mode="markers+text",
+        textposition="middle center",
+        textfont=dict(size=10, color="#0a0b0d"),
         marker=dict(
             size=9,
             color=[p["color"] for p in points],
-            line=dict(color="white", width=1),
+            symbol=[p["symbol"] for p in points],
+            line=dict(
+                color=[p["line_color"] for p in points],
+                width=[p["line_width"] for p in points],
+            ),
             opacity=0.9,
         ),
         customdata=[p["detail"] for p in points],
-        hovertemplate="%{text}<extra></extra>",
+        hovertemplate="%{hovertext}<extra></extra>",
         showlegend=False,
     ))
 
